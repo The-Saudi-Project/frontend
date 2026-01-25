@@ -1,16 +1,20 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_URL = import.meta.env.VITE_API_URL || import.meta.env.LOCAL_API_URL;
 
 export const apiRequest = async (path, method = "GET", body) => {
   const token = sessionStorage.getItem("token");
 
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+  const res = await fetch(
+    `${API_URL}${path}`,
+    {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: body ? JSON.stringify(body) : undefined,
     },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+    console.log("Ok"),
+  );
 
   if (!res.ok) {
     const err = await res.json();

@@ -11,11 +11,11 @@ export default function CustomerDashboard() {
     const [services, setServices] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [selectedService, setSelectedService] = useState(null);
+    const [error, setError] = useState("");
 
     const [bookingData, setBookingData] = useState({
         name: "",
         phone: "",
-        email: "",
         address: "",
         notes: "",
         scheduledAt: "",
@@ -49,7 +49,6 @@ export default function CustomerDashboard() {
         setBookingData({
             name: "",
             phone: "",
-            email: "",
             address: "",
             notes: "",
             scheduledAt: "",
@@ -66,15 +65,26 @@ export default function CustomerDashboard() {
             alert("Please fill all required fields");
             return;
         }
+        try {
+            await apiRequest("/bookings", "POST", {
+                serviceId: selectedService._id,
+                scheduledAt: bookingData.scheduledAt,
+                customerName: bookingData.name,
+                customerPhone: bookingData.phone,
+                customerEmail: bookingData.email || "",
+                customerAddress: bookingData.address,
 
-        await apiRequest("/bookings", "POST", {
-            serviceId: selectedService._id,
-            ...bookingData,
-        });
-
-        closeBookingModal();
-        loadBookings();
+                notes: bookingData.notes,
+            });
+            console.log("Booking created successfully");
+            console.log(bookingData.name, bookingData.phone, bookingData.address, bookingData.scheduledAt);
+            closeBookingModal();
+            loadBookings();
+        } catch (e) {
+            alert(e.message);
+        }
     };
+
 
     /* ---------------- UI ---------------- */
 
@@ -168,13 +178,6 @@ export default function CustomerDashboard() {
                                 placeholder="Phone number"
                                 onChange={(e) =>
                                     setBookingData({ ...bookingData, phone: e.target.value })
-                                }
-                            />
-                            <input
-                                className="w-full border rounded px-3 py-2"
-                                placeholder="Email"
-                                onChange={(e) =>
-                                    setBookingData({ ...bookingData, email: e.target.value })
                                 }
                             />
                             <input
