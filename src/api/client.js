@@ -11,6 +11,7 @@ export const apiRequest = async (path, method = "GET", body) => {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
       },
+      credentials: "include",
       body: body ? JSON.stringify(body) : undefined,
     },
     console.log("Ok"),
