@@ -7,6 +7,7 @@ export const apiRequest = async (path, method = "GET", body) => {
     `${API_URL}${path}`,
     {
       method,
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         ...(token && { Authorization: `Bearer ${token}` }),
