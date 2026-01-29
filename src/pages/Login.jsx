@@ -1,17 +1,15 @@
 import { useState } from "react";
-import Button from "../components/Button";
-import Card from "../components/Card";
+import { Card, Button, Input } from "../components/ui";
 
 export default function Login({
     onLogin,
-    error,
     expectedRole,
     title,
     subtitle,
 }) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [localError, setLocalError] = useState("");
+    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
     const isValidEmail = (email) =>
@@ -20,10 +18,10 @@ export default function Login({
     const canSubmit = isValidEmail(email) && password.length > 0;
 
     const handleSubmit = async () => {
-        setLocalError("");
+        setError("");
 
         if (!canSubmit) {
-            setLocalError("Please enter a valid email and password.");
+            setError("Please enter a valid email and password.");
             return;
         }
 
@@ -40,43 +38,57 @@ export default function Login({
                 );
             }
         } catch (e) {
-            setLocalError(e.message);
+            setError(e.message);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-            <Card>
-                <div className="w-80">
-                    <h2 className="text-2xl font-semibold mb-2">{title}</h2>
-                    <p className="text-sm text-gray-500 mb-6">{subtitle}</p>
+        <div className="min-h-screen bg-[#FDFCF9] flex items-center justify-center p-6">
+            <Card className="w-full max-w-md p-10">
+                {/* Logo / Icon */}
+                <div className="text-center mb-8">
+                    <div className="w-16 h-16 bg-emerald-600 rounded-2xl mx-auto mb-5 flex items-center justify-center shadow-lg shadow-emerald-200">
+                        <span className="text-white text-2xl font-bold">S</span>
+                    </div>
 
-                    {(error || localError) && (
-                        <p className="text-sm text-red-600 mb-4">
-                            {error || localError}
-                        </p>
-                    )}
+                    <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                        {title}
+                    </h1>
+                    <p className="text-slate-500 mt-2">
+                        {subtitle}
+                    </p>
+                </div>
 
-                    <input
-                        className="w-full mb-3 rounded-lg border px-3 py-2 text-sm"
-                        placeholder="Email"
+                {/* Error */}
+                {error && (
+                    <div className="mb-4 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
+                        {error}
+                    </div>
+                )}
+
+                {/* Form */}
+                <div className="space-y-5">
+                    <Input
+                        label="Email address"
+                        placeholder="you@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
 
-                    <input
+                    <Input
+                        label="Password"
                         type="password"
-                        className="w-full mb-4 rounded-lg border px-3 py-2 text-sm"
-                        placeholder="Password"
+                        placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
 
                     <Button
-                        onClick={handleSubmit}
+                        className="w-full py-4"
                         disabled={!canSubmit || loading}
+                        onClick={handleSubmit}
                     >
                         {loading ? "Signing in..." : "Sign in"}
                     </Button>

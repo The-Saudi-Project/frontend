@@ -1,132 +1,85 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
-import Card from "../components/Card";
-import Button from "../components/Button";
-import EmptyState from "../components/EmptyState";
-import ErrorBanner from "../components/ErrorBanner";
-import StatusBadge from "../components/StatusBadge";
-import { formatDateTime } from "../utils/date";
-import SummaryCard from "../components/SummaryCard";
-import SuccessBanner from "../components/SuccessBanner";
-
+import JobCard from "../components/JobCard";
 
 export default function ProviderDashboard() {
     const [jobs, setJobs] = useState([]);
-    const [error, setError] = useState("");
-    const [loadingId, setLoadingId] = useState(null);
-    const [success, setSuccess] = useState("");
-
+    const [loading, setLoading] = useState(true);
 
     const loadJobs = async () => {
-        try {
-            const res = await apiRequest("/bookings/provider");
-            setJobs(res);
-        } catch (e) {
-            setError(e.message);
-        }
+        const res = await apiRequest("/bookings/provider");
+        setJobs(res);
     };
 
     useEffect(() => {
-        loadJobs();
+        loadJobs().finally(() => setLoading(false));
     }, []);
 
-    const updateStatus = async (bookingId, status) => {
-        try {
-            setLoadingId(bookingId);
-            await apiRequest("/bookings/status", "POST", { bookingId, status });
-            setSuccess(
-                status === "IN_PROGRESS"
-                    ? "Job started successfully."
-                    : "Job marked as completed."
-            );
-
-            setTimeout(() => setSuccess(""), 3000);
-            setError("");
-            loadJobs();
-        } catch (e) {
-            setError(e.message);
-        } finally {
-            setLoadingId(null);
-        }
+    const acceptJob = async (id) => {
+        await apiRequest(`/bookings/${id}/accept`, "PATCH");
+        loadJobs();
     };
 
-    return (
-        <div className="space-y-8">
-            <ErrorBanner message={error} />
-            <SuccessBanner message={success} />
-            {/* SUMMARY CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SummaryCard
-                    label="Assigned jobs"
-                    value={jobs.filter(j => j.status === "ASSIGNED").length}
-                />
-                <SummaryCard
-                    label="In progress"
-                    value={jobs.filter(j => j.status === "IN_PROGRESS").length}
-                />
-            </div>
+    const completeJob = async (id) => {
+        await apiRequest(`/bookings/${id}/complete`, "PATCH");
+        loadJobs();
+    };
 
-            <Card>
-                <h2 className="text-xl font-semibold mb-4">My jobs</h2>
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 p-6">
+                <div className="max-w-5xl mx-auto space-y-6">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            className="bg-white p-5 rounded-2xl border border-slate-100"
+                        >
+                            <div className="flex justify-between">
+                                <div className="space-y-2">
+                                    <div className="h-5 w-40 bg-slate-200 rounded animate-pulse" />
+                                    <div className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+                                    <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
+                                </div>
+                                <div className="flex gap-2">
+                                    <div className="h-8 w-24 bg-slate-200 rounded animate-pulse" />
+                                    <div className="h-8 w-24 bg-slate-200 rounded animate-pulse" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+
+    return (
+        <div className="min-h-screen bg-slate-50 p-6">
+            <div className="max-w-5xl mx-auto space-y-6">
+                <header>
+                    <h2 className="text-2xl font-bold text-slate-900">
+                        Your Jobs
+                    </h2>
+                    <p className="text-slate-500">
+                        Jobs assigned to you
+                    </p>
+                </header>
 
                 {jobs.length === 0 ? (
-                    <EmptyState
-                        title="No jobs assigned"
-                        description="Jobs will appear once admin assigns them."
-                    />
+                    <p className="text-slate-500">
+                        No jobs assigned yet
+                    </p>
                 ) : (
-                    <ul className="space-y-4">
-                        {jobs.map((job) => (
-                            <li
-                                key={job._id}
-                                className="flex justify-between items-center border rounded-xl px-4 py-3"
-                            >
-                                <div>
-                                    <p className="font-medium">{job.service.name}</p>
-                                    <p className="text-sm text-gray-500">
-                                        Customer: {job.customer.name}
-                                    </p>
-                                    <p className="text-sm text-gray-500">
-                                        {formatDateTime(job.scheduledAt)}
-                                    </p>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                    <StatusBadge status={job.status} />
-
-                                    <Button
-                                        disabled={
-                                            job.status !== "ASSIGNED" ||
-                                            loadingId === job._id
-                                        }
-                                        onClick={() =>
-                                            updateStatus(job._id, "IN_PROGRESS")
-                                        }
-                                    >
-                                        {loadingId === job._id
-                                            ? "Starting..."
-                                            : "Start"}
-                                    </Button>
-
-                                    <Button
-                                        disabled={
-                                            job.status !== "IN_PROGRESS" ||
-                                            loadingId === job._id
-                                        }
-                                        onClick={() =>
-                                            updateStatus(job._id, "COMPLETED")
-                                        }
-                                    >
-                                        {loadingId === job._id
-                                            ? "Completing..."
-                                            : "Complete"}
-                                    </Button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                    jobs.map((job) => (
+                        <JobCard
+                            key={job._id}
+                            booking={job}
+                            onAccept={acceptJob}
+                            onComplete={completeJob}
+                        />
+                    ))
                 )}
-            </Card>
+            </div>
         </div>
     );
 }

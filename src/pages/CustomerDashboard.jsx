@@ -1,222 +1,109 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
-import Card from "../components/Card";
-import Button from "../components/Button";
-import EmptyState from "../components/EmptyState";
-import SummaryCard from "../components/SummaryCard";
-import StatusBadge from "../components/StatusBadge";
-import { formatDateTime } from "../utils/date";
+import { Button, Card, Badge } from "../components/Ui";
 
 export default function CustomerDashboard() {
     const [services, setServices] = useState([]);
     const [bookings, setBookings] = useState([]);
-    const [selectedService, setSelectedService] = useState(null);
-    const [error, setError] = useState("");
-
-    const [bookingData, setBookingData] = useState({
-        name: "",
-        phone: "",
-        address: "",
-        notes: "",
-        scheduledAt: "",
-    });
-
-    /* ---------------- LOAD DATA ---------------- */
-
-    const loadServices = async () => {
-        const res = await apiRequest("/services");
-        setServices(res);
-    };
-
-    const loadBookings = async () => {
-        const res = await apiRequest("/bookings/my");
-        setBookings(res);
-    };
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadServices();
-        loadBookings();
+        Promise.all([
+            apiRequest("/services"),
+            apiRequest("/bookings/customer"),
+        ])
+            .then(([servicesRes, bookingsRes]) => {
+                setServices(servicesRes);
+                setBookings(bookingsRes);
+            })
+            .finally(() => setLoading(false));
     }, []);
 
-    /* ---------------- BOOKING ---------------- */
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-50 p-6">
+                <div className="max-w-6xl mx-auto">
+                    <div className="mb-8">
+                        <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
+                        <div className="h-4 w-64 bg-slate-200 rounded mt-2 animate-pulse" />
+                    </div>
 
-    const openBookingModal = (service) => {
-        setSelectedService(service);
-    };
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3].map((i) => (
+                            <div
+                                key={i}
+                                className="bg-white p-5 rounded-2xl border border-slate-100"
+                            >
+                                <div className="h-40 bg-slate-200 rounded-xl mb-4 animate-pulse" />
+                                <div className="h-5 w-3/4 bg-slate-200 rounded animate-pulse" />
+                                <div className="h-4 w-full bg-slate-200 rounded mt-2 animate-pulse" />
+                                <div className="h-6 w-24 bg-slate-200 rounded mt-4 animate-pulse" />
+                                <div className="h-10 w-full bg-slate-200 rounded-xl mt-6 animate-pulse" />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-    const closeBookingModal = () => {
-        setSelectedService(null);
-        setBookingData({
-            name: "",
-            phone: "",
-            address: "",
-            notes: "",
-            scheduledAt: "",
-        });
-    };
-
-    const confirmBooking = async () => {
-        if (
-            !bookingData.name ||
-            !bookingData.phone ||
-            !bookingData.address ||
-            !bookingData.scheduledAt
-        ) {
-            alert("Please fill all required fields");
-            return;
-        }
-        try {
-            await apiRequest("/bookings", "POST", {
-                serviceId: selectedService._id,
-                scheduledAt: bookingData.scheduledAt,
-                customerName: bookingData.name,
-                customerPhone: bookingData.phone,
-                customerEmail: bookingData.email || "",
-                customerAddress: bookingData.address,
-
-                notes: bookingData.notes,
-            });
-            console.log("Booking created successfully");
-            console.log(bookingData.name, bookingData.phone, bookingData.address, bookingData.scheduledAt);
-            closeBookingModal();
-            loadBookings();
-        } catch (e) {
-            alert(e.message);
-        }
-    };
-
-
-    /* ---------------- UI ---------------- */
 
     return (
-        <div className="space-y-8">
-            {/* SUMMARY */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <SummaryCard
-                    label="Upcoming bookings"
-                    value={bookings.filter((b) =>
-                        ["CREATED", "ASSIGNED", "IN_PROGRESS"].includes(b.status)
-                    ).length}
-                />
-                <SummaryCard
-                    label="Completed bookings"
-                    value={bookings.filter((b) => b.status === "COMPLETED").length}
-                />
-            </div>
+        <div className="min-h-screen bg-slate-50 pb-20">
+            <main className="max-w-6xl mx-auto p-6">
+                <header className="mb-8">
+                    <h2 className="text-2xl font-bold text-slate-900">Choose a Service</h2>
+                    <p className="text-slate-500">Verified professionals</p>
+                </header>
 
-            {/* SERVICES */}
-            <Card>
-                <h2 className="text-xl font-semibold mb-4">Available services</h2>
-
+                {/* SERVICES */}
                 {services.length === 0 ? (
-                    <EmptyState title="No services available" />
+                    <p className="text-slate-500">No services available</p>
                 ) : (
-                    <ul className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {services.map((s) => (
-                            <li
-                                key={s._id}
-                                className="flex justify-between items-center border rounded-xl px-4 py-3"
-                            >
+                            <Card key={s._id} className="p-5 flex flex-col justify-between">
                                 <div>
-                                    <p className="font-medium">{s.name}</p>
-                                    <p className="text-sm text-gray-500">SAR {s.price}</p>
-                                </div>
-                                <Button onClick={() => openBookingModal(s)}>
-                                    Book
-                                </Button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </Card>
-
-            {/* BOOKINGS */}
-            <Card>
-                <h2 className="text-xl font-semibold mb-4">My bookings</h2>
-
-                {bookings.length === 0 ? (
-                    <EmptyState title="No bookings yet" />
-                ) : (
-                    <ul className="space-y-3">
-                        {bookings.map((b) => (
-                            <li
-                                key={b._id}
-                                className="flex justify-between items-center border rounded-xl px-4 py-3"
-                            >
-                                <div>
-                                    <p className="font-medium">{b.service?.name}</p>
-                                    <p className="text-sm text-gray-500">
-                                        {formatDateTime(b.scheduledAt)}
+                                    <div className="h-40 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400">
+                                        Service Image
+                                    </div>
+                                    <h3 className="font-bold text-lg">{s.name}</h3>
+                                    <p className="text-slate-500 text-sm">{s.description}</p>
+                                    <p className="text-emerald-600 font-bold mt-4 text-xl">
+                                        {s.price} SAR
                                     </p>
                                 </div>
 
-                                <StatusBadge status={b.status} />
-                            </li>
+                                <Button
+                                    className="mt-6 w-full"
+                                    onClick={() =>
+                                        apiRequest("/bookings", "POST", { serviceId: s._id })
+                                    }
+                                >
+                                    Book Now
+                                </Button>
+                            </Card>
                         ))}
-                    </ul>
-                )}
-            </Card>
-
-            {/* BOOKING MODAL */}
-            {selectedService && (
-                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-xl w-full max-w-md p-6">
-                        <h2 className="text-xl font-semibold mb-4">
-                            Book {selectedService.name}
-                        </h2>
-
-                        <div className="space-y-3">
-                            <input
-                                className="w-full border rounded px-3 py-2"
-                                placeholder="Full name"
-                                onChange={(e) =>
-                                    setBookingData({ ...bookingData, name: e.target.value })
-                                }
-                            />
-                            <input
-                                className="w-full border rounded px-3 py-2"
-                                placeholder="Phone number"
-                                onChange={(e) =>
-                                    setBookingData({ ...bookingData, phone: e.target.value })
-                                }
-                            />
-                            <input
-                                className="w-full border rounded px-3 py-2"
-                                placeholder="Address"
-                                onChange={(e) =>
-                                    setBookingData({ ...bookingData, address: e.target.value })
-                                }
-                            />
-                            <input
-                                type="datetime-local"
-                                className="w-full border rounded px-3 py-2"
-                                onChange={(e) =>
-                                    setBookingData({
-                                        ...bookingData,
-                                        scheduledAt: e.target.value,
-                                    })
-                                }
-                            />
-                            <textarea
-                                className="w-full border rounded px-3 py-2"
-                                placeholder="Additional comments (optional)"
-                                onChange={(e) =>
-                                    setBookingData({ ...bookingData, notes: e.target.value })
-                                }
-                            />
-                        </div>
-
-                        <div className="flex justify-end gap-3 mt-6">
-                            <Button variant="secondary" onClick={closeBookingModal}>
-                                Cancel
-                            </Button>
-                            <Button onClick={confirmBooking}>
-                                Confirm booking
-                            </Button>
-                        </div>
                     </div>
+                )}
+
+                {/* BOOKINGS */}
+                <div className="mt-12">
+                    <h3 className="font-bold text-lg mb-4">Your Recent Bookings</h3>
+
+                    {bookings.map((b) => (
+                        <Card key={b._id} className="p-4 flex justify-between">
+                            <div>
+                                <p className="font-bold">{b.service.name}</p>
+                                <p className="text-xs text-slate-500">
+                                    {new Date(b.createdAt).toLocaleString()}
+                                </p>
+                            </div>
+                            <Badge status={b.status} />
+                        </Card>
+                    ))}
                 </div>
-            )}
+            </main>
         </div>
     );
 }

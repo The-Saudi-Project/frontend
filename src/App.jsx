@@ -9,6 +9,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import { apiRequest } from "./api/client";
+import RoleSelect from "./pages/RoleSelect";
+
 
 export default function App() {
   const { user, loading, login, logout } = useAuth();
@@ -21,6 +23,8 @@ export default function App() {
   if (!user) {
     return (
       <Routes>
+        <Route path="/" element={<RoleSelect />} />
+
         <Route
           path="/login/customer"
           element={
@@ -51,18 +55,18 @@ export default function App() {
             <Login
               expectedRole="admin"
               title="Admin Login"
-              subtitle="Manage platform operations"
+              subtitle="Platform management console"
               onLogin={login}
             />
           }
         />
 
-        <Route path="*" element={<Navigate to="/login/customer" />} />
+        <Route path="/signup" element={<Signup />} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     );
   }
-
-
 
   /* ---------------- LOGGED IN ---------------- */
   return (

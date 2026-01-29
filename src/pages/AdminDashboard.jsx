@@ -1,279 +1,171 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
-import Card from "../components/Card";
-import Button from "../components/Button";
-import EmptyState from "../components/EmptyState";
-import ErrorBanner from "../components/ErrorBanner";
-import SummaryCard from "../components/SummaryCard";
-import SuccessBanner from "../components/SuccessBanner";
-import StatusBadge from "../components/StatusBadge";
-import { formatDateTime } from "../utils/date";
-
-
+import { Card, Button, Input } from "../components/Ui";
 
 export default function AdminDashboard() {
     const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
-    const [bookings, setBookings] = useState([]);
-    const [providers, setProviders] = useState([]);
-
-
 
     const loadServices = async () => {
-        try {
-            const res = await apiRequest("/services/admin");
-            setServices(res);
-        } catch (e) {
-            setError(e.message);
-        }
+        const res = await apiRequest("/services/admin");
+        setServices(res);
     };
-    const loadBookings = async () => {
-        try {
-            const res = await apiRequest("/bookings");
-            setBookings(res);
-        } catch (e) {
-            setError(e.message);
-        }
-    };
-    const loadProviders = async () => {
-        try {
-            const res = await apiRequest("/users/providers");
-            setProviders(res);
-        } catch (e) {
-            setError(e.message);
-        }
-    };
-
 
     useEffect(() => {
-        loadServices();
-        loadBookings();
-        loadProviders();
+        loadServices().finally(() => setLoading(false));
     }, []);
 
     const createService = async () => {
-        if (!name || !price) {
-            setError("Job name and price are required.");
-            return;
-        }
+        if (!name || !price) return;
 
-        try {
-            await apiRequest("/services", "POST", {
-                name,
-                price: Number(price),
-                description,
-            });
+        await apiRequest("/services", "POST", {
+            name,
+            price: Number(price),
+            description,
+        });
 
-            setName("");
-            setPrice("");
-            setDescription("");
-            setError("");
-            loadServices();
-            setSuccess("Job added successfully.");
-        } catch (e) {
-            setError(e.message);
-        }
+        setName("");
+        setPrice("");
+        setDescription("");
+        loadServices();
     };
 
     const deleteService = async (id) => {
-        const confirmDelete = window.confirm(
-            "Are you sure? This will permanently delete the job."
+        const ok = window.confirm(
+            "Are you sure you want to permanently delete this service?"
         );
-        if (!confirmDelete) return;
+        if (!ok) return;
 
-        try {
-            await apiRequest(`/services/${id}`, "DELETE");
-            setError("");
-            loadServices();
-            setSuccess("Job deleted successfully.");
-        } catch (e) {
-            setError(e.message);
-        }
+        await apiRequest(`/services/${id}`, "DELETE");
+        loadServices();
     };
-    const assignProvider = async (bookingId, providerId) => {
-        if (!providerId) return;
 
-        try {
-            await apiRequest("/bookings/assign", "POST", {
-                bookingId,
-                providerId,
-            });
+    if (loading) {
+        return (
+            <div className="p-8 max-w-5xl mx-auto space-y-8">
+                <div className="bg-white p-8 rounded-2xl border border-slate-100">
+                    <div className="h-6 w-48 bg-slate-200 rounded animate-pulse mb-6" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {[1, 2, 3].map((i) => (
+                            <div
+                                key={i}
+                                className="h-12 bg-slate-200 rounded animate-pulse"
+                            />
+                        ))}
+                    </div>
+                    <div className="h-10 w-40 bg-slate-200 rounded-xl mt-8 animate-pulse" />
+                </div>
 
-            setSuccess("Provider assigned successfully.");
-            setError("");
-            loadBookings();
-        } catch (e) {
-            setError(e.message);
-        }
-    };
+                <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            className="flex justify-between p-6 border-b border-slate-100"
+                        >
+                            <div className="h-4 w-40 bg-slate-200 rounded animate-pulse" />
+                            <div className="h-4 w-20 bg-slate-200 rounded animate-pulse" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
 
     return (
-        <div className="space-y-8">
-            {/* ERROR BANNER */}
-            <ErrorBanner message={error} />
-            <SuccessBanner message={success} />
-            {/* SUMMARY CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <SummaryCard label="Total jobs" value={services.length} />
-                <SummaryCard
-                    label="Bookings today"
-                    value={bookings.filter(b =>
-                        new Date(b.createdAt).toDateString() === new Date().toDateString()
-                    ).length}
-                />
-                <SummaryCard
-                    label="Unassigned bookings"
-                    value={bookings.filter(b => b.status === "CREATED").length}
-                />
-            </div>
-
+        <div className="p-8 max-w-5xl mx-auto space-y-8">
             {/* CREATE SERVICE */}
-            <Card>
-                <h2 className="text-xl font-semibold mb-4">Add new job</h2>
+            <Card className="p-8">
+                <h3 className="text-xl font-bold mb-6">
+                    Create New Service
+                </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <input
-                        className="border rounded-lg px-3 py-2"
-                        placeholder="Job name"
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Input
+                        label="Service Name"
+                        placeholder="e.g. Electrical Repair"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                     />
-                    <input
-                        className="border rounded-lg px-3 py-2"
-                        placeholder="Price (SAR)"
+
+                    <Input
+                        label="Base Price (SAR)"
+                        type="number"
+                        placeholder="200"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                     />
-                    <input
-                        className="border rounded-lg px-3 py-2"
-                        placeholder="Description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                    />
-                </div>
 
-                <div className="mt-4">
-                    <Button onClick={createService}>Add job</Button>
-                </div>
-            </Card>
-
-            {/* MANAGE SERVICES */}
-            <Card>
-                <h2 className="text-xl font-semibold mb-4">Manage jobs</h2>
-
-                {services.length === 0 ? (
-                    <EmptyState
-                        title="No jobs found"
-                        description="Add a job to make it available for customers."
-                    />
-                ) : (
-                    <ul className="space-y-3">
-                        {services.map((s) => (
-                            <li
-                                key={s._id}
-                                className="flex justify-between items-center border rounded-xl px-4 py-3"
-                            >
-                                <div>
-                                    <p className="font-medium">{s.name}</p>
-                                    <p className="text-sm text-gray-500">
-                                        SAR {s.price}
-                                    </p>
-                                </div>
-
-                                <Button
-                                    variant="secondary"
-                                    onClick={() => deleteService(s._id)}
-                                >
-                                    Delete Job
-                                </Button>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </Card>
-            <Card>
-                <h2 className="text-xl font-semibold mb-4">All bookings</h2>
-
-                {bookings.length === 0 ? (
-                    <EmptyState
-                        title="No bookings yet"
-                        description="Bookings will appear as customers place orders."
-                    />
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm border-collapse">
-                            <thead>
-                                <tr className="border-b text-left text-gray-500">
-                                    <th className="py-2">Service</th>
-                                    <th className="py-2">Customer</th>
-                                    <th className="py-2">Provider</th>
-                                    <th className="py-2">Scheduled</th>
-                                    <th className="py-2">Status</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {bookings.map((b) => (
-                                    <tr
-                                        key={b._id}
-                                        className={`border-b ${b.status === "CREATED" ? "bg-yellow-50" : ""
-                                            }`}
-                                    >
-                                        <td className="py-3">
-                                            {b.service ? b.service.name : "—"}
-                                        </td>
-
-                                        <td className="py-3">
-                                            {b.customer ? b.customer.name : "—"}
-                                        </td>
-
-                                        <td className="py-3">
-                                            {b.provider ? b.provider.name : "Unassigned"}
-                                        </td>
-
-                                        <td className="py-3">
-                                            {formatDateTime(b.scheduledAt)}
-                                        </td>
-                                        <td className="py-3">
-                                            <StatusBadge status={b.status} />
-
-                                            {b.status === "CREATED" && (
-                                                <div className="mt-2">
-                                                    <select
-                                                        className="border rounded px-2 py-1 text-sm w-full"
-                                                        defaultValue=""
-                                                        disabled={b.status !== "CREATED"}
-                                                        onChange={(e) =>
-                                                            assignProvider(b._id, e.target.value)
-                                                        }
-                                                    >
-
-                                                        <option value="" disabled>
-                                                            Assign provider
-                                                        </option>
-                                                        {providers.map((p) => (
-                                                            <option key={p._id} value={p._id}>
-                                                                {p.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            )}
-                                        </td>
-
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="md:col-span-2">
+                        <Input
+                            label="Description"
+                            placeholder="Enter service details..."
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
                     </div>
-                )}
+                </div>
+
+                <Button className="mt-8 px-10" onClick={createService}>
+                    Publish Service
+                </Button>
             </Card>
 
+            {/* SERVICES TABLE */}
+            <div className="overflow-hidden border border-slate-100 rounded-2xl bg-white">
+                {services.length === 0 ? (
+                    <div className="p-6 text-slate-500">
+                        No services created yet
+                    </div>
+                ) : (
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th className="px-6 py-4 font-semibold">
+                                    Service Name
+                                </th>
+                                <th className="px-6 py-4 font-semibold">
+                                    Price
+                                </th>
+                                <th className="px-6 py-4 font-semibold text-right">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody className="divide-y divide-slate-100">
+                            {services.map((s) => (
+                                <tr
+                                    key={s._id}
+                                    className="hover:bg-slate-50 transition-colors"
+                                >
+                                    <td className="px-6 py-4 font-medium text-slate-900">
+                                        {s.name}
+                                    </td>
+
+                                    <td className="px-6 py-4 text-slate-600 font-mono">
+                                        {s.price} SAR
+                                    </td>
+
+                                    <td className="px-6 py-4 text-right">
+                                        <Button
+                                            variant="danger"
+                                            className="py-1.5 px-3 text-xs"
+                                            onClick={() => deleteService(s._id)}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
         </div>
     );
 }
