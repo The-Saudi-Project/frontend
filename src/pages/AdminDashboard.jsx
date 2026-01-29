@@ -5,7 +5,10 @@ import { Card, Button, Input } from "../components/Ui";
 export default function AdminDashboard() {
     const [services, setServices] = useState([]);
     const [loading, setLoading] = useState(true);
-
+    const [editingService, setEditingService] = useState(null);
+    const [editName, setEditName] = useState("");
+    const [editPrice, setEditPrice] = useState("");
+    const [editDescription, setEditDescription] = useState("");
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
@@ -31,6 +34,22 @@ export default function AdminDashboard() {
         setName("");
         setPrice("");
         setDescription("");
+        loadServices();
+    };
+    const startEdit = (service) => {
+        setEditingService(service._id);
+        setEditName(service.name);
+        setEditPrice(service.price);
+        setEditDescription(service.description || "");
+    };
+    const saveEdit = async () => {
+        await apiRequest(`/services/${editingService}`, "PATCH", {
+            name: editName,
+            price: Number(editPrice),
+            description: editDescription,
+        });
+
+        setEditingService(null);
         loadServices();
     };
 
@@ -143,26 +162,85 @@ export default function AdminDashboard() {
                                     key={s._id}
                                     className="hover:bg-slate-50 transition-colors"
                                 >
-                                    <td className="px-6 py-4 font-medium text-slate-900">
-                                        {s.name}
-                                    </td>
+                                    {editingService && editingService === s._id ? (
+                                        <>
+                                            {/* NAME */}
+                                            <td className="px-6 py-4">
+                                                <input
+                                                    className="w-full border rounded-lg px-3 py-2"
+                                                    value={editName}
+                                                    onChange={(e) => setEditName(e.target.value)}
+                                                />
+                                            </td>
 
-                                    <td className="px-6 py-4 text-slate-600 font-mono">
-                                        {s.price} SAR
-                                    </td>
+                                            {/* PRICE */}
+                                            <td className="px-6 py-4">
+                                                <input
+                                                    type="number"
+                                                    className="w-full border rounded-lg px-3 py-2"
+                                                    value={editPrice}
+                                                    onChange={(e) => setEditPrice(e.target.value)}
+                                                />
+                                            </td>
 
-                                    <td className="px-6 py-4 text-right">
-                                        <Button
-                                            variant="danger"
-                                            className="py-1.5 px-3 text-xs"
-                                            onClick={() => deleteService(s._id)}
-                                        >
-                                            Remove
-                                        </Button>
-                                    </td>
+                                            {/* ACTIONS */}
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        className="h-9 px-4 text-sm"
+                                                        onClick={saveEdit}
+                                                    >
+                                                        Save
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="secondary"
+                                                        className="h-9 px-4 text-sm"
+                                                        onClick={() => setEditingService(null)}
+                                                    >
+                                                        Cancel
+                                                    </Button>
+                                                </div>
+                                            </td>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {/* VIEW MODE */}
+                                            <td className="px-6 py-4 font-medium text-slate-900">
+                                                {s.name}
+                                            </td>
+
+                                            <td className="px-6 py-4 text-slate-600 font-mono">
+                                                {s.price} SAR
+                                            </td>
+
+                                            <td className="px-6 py-4">
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="secondary"
+                                                        className="h-9 px-4 text-sm"
+                                                        onClick={() => startEdit(s)}
+                                                    >
+                                                        Edit
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="danger"
+                                                        className="h-9 px-4 text-sm"
+                                                        onClick={() => deleteService(s._id)}
+                                                    >
+                                                        Remove
+                                                    </Button>
+                                                </div>
+                                            </td>
+
+
+                                        </>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
+
                     </table>
                 )}
             </div>
