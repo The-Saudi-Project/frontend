@@ -6,6 +6,7 @@ export default function CustomerDashboard() {
     const [services, setServices] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [bookingLoading, setBookingLoading] = useState(null);
 
     useEffect(() => {
         Promise.all([
@@ -19,90 +20,126 @@ export default function CustomerDashboard() {
             .finally(() => setLoading(false));
     }, []);
 
+    const bookService = async (serviceId) => {
+        try {
+            setBookingLoading(serviceId);
+            await apiRequest("/bookings", "POST", { serviceId });
+            const updated = await apiRequest("/bookings/customer");
+            setBookings(updated);
+        } finally {
+            setBookingLoading(null);
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 p-6">
-                <div className="max-w-6xl mx-auto">
-                    <div className="mb-8">
-                        <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
-                        <div className="h-4 w-64 bg-slate-200 rounded mt-2 animate-pulse" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {[1, 2, 3].map((i) => (
-                            <div
-                                key={i}
-                                className="bg-white p-5 rounded-2xl border border-slate-100"
-                            >
-                                <div className="h-40 bg-slate-200 rounded-xl mb-4 animate-pulse" />
-                                <div className="h-5 w-3/4 bg-slate-200 rounded animate-pulse" />
-                                <div className="h-4 w-full bg-slate-200 rounded mt-2 animate-pulse" />
-                                <div className="h-6 w-24 bg-slate-200 rounded mt-4 animate-pulse" />
-                                <div className="h-10 w-full bg-slate-200 rounded-xl mt-6 animate-pulse" />
-                            </div>
-                        ))}
-                    </div>
+                <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <div
+                            key={i}
+                            className="bg-white p-6 rounded-2xl border border-slate-100 animate-pulse"
+                        >
+                            <div className="h-40 bg-slate-200 rounded-xl mb-4" />
+                            <div className="h-5 w-3/4 bg-slate-200 rounded mb-2" />
+                            <div className="h-4 w-full bg-slate-200 rounded" />
+                            <div className="h-10 w-full bg-slate-200 rounded-xl mt-6" />
+                        </div>
+                    ))}
                 </div>
             </div>
         );
     }
 
-
     return (
-        <div className="min-h-screen bg-slate-50 pb-20">
+        <div className="min-h-screen bg-slate-50 pb-24">
             <main className="max-w-6xl mx-auto p-6">
-                <header className="mb-8">
-                    <h2 className="text-2xl font-bold text-slate-900">Choose a Service</h2>
-                    <p className="text-slate-500">Verified professionals</p>
+                {/* HEADER */}
+                <header className="mb-10">
+                    <h1 className="text-3xl font-bold text-slate-900">
+                        Book a Service
+                    </h1>
+                    <p className="text-slate-500 mt-1">
+                        Verified professionals at your doorstep
+                    </p>
                 </header>
 
                 {/* SERVICES */}
-                {services.length === 0 ? (
-                    <p className="text-slate-500">No services available</p>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {services.map((s) => (
-                            <Card key={s._id} className="p-5 flex flex-col justify-between">
-                                <div>
-                                    <div className="h-40 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400">
-                                        Service Image
-                                    </div>
-                                    <h3 className="font-bold text-lg">{s.name}</h3>
-                                    <p className="text-slate-500 text-sm">{s.description}</p>
-                                    <p className="text-emerald-600 font-bold mt-4 text-xl">
-                                        {s.price} SAR
-                                    </p>
-                                </div>
-
-                                <Button
-                                    className="mt-6 w-full"
-                                    onClick={() =>
-                                        apiRequest("/bookings", "POST", { serviceId: s._id })
-                                    }
+                <section>
+                    {services.length === 0 ? (
+                        <p className="text-slate-500">No services available</p>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {services.map((s) => (
+                                <Card
+                                    key={s._id}
+                                    className="p-5 flex flex-col justify-between hover:shadow-md transition-shadow"
                                 >
-                                    Book Now
-                                </Button>
-                            </Card>
-                        ))}
-                    </div>
-                )}
+                                    <div>
+                                        <div className="h-40 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400">
+                                            Service Image
+                                        </div>
+
+                                        <h3 className="font-bold text-lg text-slate-900">
+                                            {s.name}
+                                        </h3>
+
+                                        <p className="text-slate-500 text-sm mt-1">
+                                            {s.description || "Professional service"}
+                                        </p>
+
+                                        <p className="text-emerald-600 font-bold mt-4 text-xl">
+                                            {s.price} SAR
+                                        </p>
+                                    </div>
+
+                                    <Button
+                                        className="mt-6 w-full"
+                                        disabled={bookingLoading === s._id}
+                                        onClick={() => bookService(s._id)}
+                                    >
+                                        {bookingLoading === s._id
+                                            ? "Booking..."
+                                            : "Book Now"}
+                                    </Button>
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </section>
 
                 {/* BOOKINGS */}
-                <div className="mt-12">
-                    <h3 className="font-bold text-lg mb-4">Your Recent Bookings</h3>
+                <section className="mt-16">
+                    <h2 className="text-xl font-bold mb-6">
+                        Your Bookings
+                    </h2>
 
-                    {bookings.map((b) => (
-                        <Card key={b._id} className="p-4 flex justify-between">
-                            <div>
-                                <p className="font-bold">{b.service.name}</p>
-                                <p className="text-xs text-slate-500">
-                                    {new Date(b.createdAt).toLocaleString()}
-                                </p>
-                            </div>
-                            <Badge status={b.status} />
-                        </Card>
-                    ))}
-                </div>
+                    {bookings.length === 0 ? (
+                        <p className="text-slate-500">
+                            You haven’t made any bookings yet
+                        </p>
+                    ) : (
+                        <div className="space-y-4">
+                            {bookings.map((b) => (
+                                <Card
+                                    key={b._id}
+                                    className="p-5 flex items-center justify-between"
+                                >
+                                    <div>
+                                        <p className="font-semibold text-slate-900">
+                                            {b.service.name}
+                                        </p>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            {new Date(b.createdAt).toLocaleString()}
+                                        </p>
+                                    </div>
+
+                                    <Badge status={b.status} />
+                                </Card>
+                            ))}
+                        </div>
+                    )}
+                </section>
             </main>
         </div>
     );

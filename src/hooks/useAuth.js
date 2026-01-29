@@ -20,12 +20,16 @@ export const useAuth = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
-    const res = await apiRequest("/auth/login", "POST", { email, password });
+  const login = async (email, password, expectedRole) => {
+    const res = await apiRequest("/auth/login", "POST", {
+      email,
+      password,
+      expectedRole, // ✅ send intent
+    });
+
     sessionStorage.setItem("token", res.token);
     const me = await apiRequest("/auth/me");
     setUser(me);
-    return me;
   };
 
   const logout = () => {

@@ -9,7 +9,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import ProviderDashboard from "./pages/ProviderDashboard";
 import { apiRequest } from "./api/client";
-import RoleSelect from "./pages/RoleSelect";
+import RoleSelection from "./pages/RoleSelection";
+import AdminBookings from "./pages/AdminBookings";
 
 
 export default function App() {
@@ -23,7 +24,7 @@ export default function App() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/" element={<RoleSelect />} />
+        <Route path="/" element={<RoleSelection />} />
 
         <Route
           path="/login/customer"
@@ -109,6 +110,16 @@ export default function App() {
                 <Navigate to="/" replace />
               )
             }
+          />
+          {/* ADMIN BOOKINGS */}
+          <Route
+            path="/admin"
+            element={<AdminDashboard />}
+          />
+
+          <Route
+            path="/admin/bookings"
+            element={<AdminBookings />}
           />
 
           {/* ROOT REDIRECT */}
