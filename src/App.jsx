@@ -13,7 +13,7 @@ import { apiRequest } from "./api/client";
 export default function App() {
   const { user, loading, login, logout } = useAuth();
   const [error, setError] = useState("");
-  const [mode, setMode] = useState("login"); // login | signup
+
 
   if (loading) return <Loader />;
 
@@ -33,10 +33,6 @@ export default function App() {
                 }
               }}
               error={error}
-              onSwitch={() => {
-                setError("");
-                setMode("signup");
-              }}
             />
           }
         />
@@ -54,22 +50,15 @@ export default function App() {
                 }
               }}
               error={error}
-              onSwitch={() => {
-                setError("");
-                setMode("login");
-              }}
             />
           }
         />
 
-        {/* DEFAULT */}
-        <Route
-          path="*"
-          element={<Navigate to="/login" replace />}
-        />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
+
 
   /* ---------------- LOGGED IN ---------------- */
   return (
