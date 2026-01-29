@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../components/Button";
 import Card from "../components/Card";
 import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../api/client";
 
 export default function Signup({ onSignup, error, onSwitch }) {
     const [firstName, setFirstName] = useState("");
@@ -11,11 +12,14 @@ export default function Signup({ onSignup, error, onSwitch }) {
     const [role, setRole] = useState("customer");
     const [localError, setLocalError] = useState("");
     const navigate = useNavigate();
+    const [services, setServices] = useState([]);
+    const [servicesLoading, setServicesLoading] = useState(true);
+    const [servicesError, setServicesError] = useState("");
+    const [selectedServices, setSelectedServices] = useState([]);
 
 
     const isValidEmail = (email) =>
         /^\S+@\S+\.\S+$/.test(email);
-
     const isValidPassword = (password) =>
         password.length >= 8 &&
         /[A-Za-z]/.test(password) &&
@@ -26,7 +30,13 @@ export default function Signup({ onSignup, error, onSwitch }) {
         lastName.trim().length >= 2 &&
         isValidEmail(email) &&
         isValidPassword(password);
-
+    const toggleService = (serviceId) => {
+        setSelectedServices((prev) =>
+            prev.includes(serviceId)
+                ? prev.filter((id) => id !== serviceId)
+                : [...prev, serviceId]
+        );
+    };
     const handleSubmit = () => {
         setLocalError("");
 
@@ -45,6 +55,20 @@ export default function Signup({ onSignup, error, onSwitch }) {
             role,
         });
     };
+    useEffect(() => {
+        const loadServices = async () => {
+            try {
+                const res = await apiRequest("/services/public");
+                setServices(res);
+            } catch (e) {
+                setServicesError("Failed to load services");
+            } finally {
+                setServicesLoading(false);
+            }
+        };
+
+        loadServices();
+    }, []);
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -111,6 +135,37 @@ export default function Signup({ onSignup, error, onSwitch }) {
                             <option value="provider">Service Provider</option>
                         </select>
                     </div>
+                    {role === "provider" && (
+                        <div className="mt-4">
+                            <p className="text-sm font-medium mb-2">
+                                Select services you offer
+                            </p>
+
+                            {servicesLoading && (
+                                <p className="text-sm text-gray-500">Loading services…</p>
+                            )}
+
+                            {servicesError && (
+                                <p className="text-sm text-red-600">{servicesError}</p>
+                            )}
+
+                            <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+                                {services.map((s) => (
+                                    <label
+                                        key={s._id}
+                                        className="flex items-center gap-2 text-sm cursor-pointer"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedServices.includes(s._id)}
+                                            onChange={() => toggleService(s._id)}
+                                        />
+                                        <span>{s.name}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <Button
                         onClick={handleSubmit}

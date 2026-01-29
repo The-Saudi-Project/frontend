@@ -1,22 +1,18 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
+console.log("API_URL:", API_URL);
+
 export const apiRequest = async (path, method = "GET", body) => {
   const token = sessionStorage.getItem("token");
 
-  const res = await fetch(
-    `${API_URL}${path}`,
-    {
-      method,
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      credentials: "include",
-      body: body ? JSON.stringify(body) : undefined,
+  const res = await fetch(`${API_URL}${path}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
-    console.log("Ok"),
-  );
+    body: body ? JSON.stringify(body) : undefined,
+  });
 
   if (!res.ok) {
     const err = await res.json();
