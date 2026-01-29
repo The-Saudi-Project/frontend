@@ -2,15 +2,24 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
 import { Button, Card, Badge } from "../components/Ui.jsx";
 
+const statusLabel = {
+    CREATED: "Requested",
+    ASSIGNED: "Provider Assigned",
+    IN_PROGRESS: "In Progress",
+    COMPLETED: "Completed",
+    CANCELLED: "Cancelled",
+};
+
 export default function CustomerDashboard() {
     const [services, setServices] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(null);
+    const [success, setSuccess] = useState("");
 
     useEffect(() => {
         Promise.all([
-            apiRequest("/services"),
+            apiRequest("/services/public"), // ✅ FIXED
             apiRequest("/bookings/customer"),
         ])
             .then(([servicesRes, bookingsRes]) => {
@@ -23,11 +32,17 @@ export default function CustomerDashboard() {
     const bookService = async (serviceId) => {
         try {
             setBookingLoading(serviceId);
+            setSuccess("");
+
             await apiRequest("/bookings", "POST", { serviceId });
+
             const updated = await apiRequest("/bookings/customer");
             setBookings(updated);
+
+            setSuccess("Booking request sent successfully!");
         } finally {
             setBookingLoading(null);
+            setTimeout(() => setSuccess(""), 3000);
         }
     };
 
@@ -60,14 +75,27 @@ export default function CustomerDashboard() {
                         Book a Service
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Verified professionals at your doorstep
+                        Trusted professionals at your doorstep
                     </p>
                 </header>
 
-                {/* SERVICES */}
+                {/* SUCCESS MESSAGE */}
+                {success && (
+                    <div className="mb-8 bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-3 rounded-xl">
+                        {success}
+                    </div>
+                )}
+
+                {/* AVAILABLE SERVICES */}
                 <section>
+                    <h2 className="text-xl font-bold mb-6">
+                        Available Services
+                    </h2>
+
                     {services.length === 0 ? (
-                        <p className="text-slate-500">No services available</p>
+                        <Card className="p-8 text-center text-slate-500">
+                            No services are available right now.
+                        </Card>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {services.map((s) => (
@@ -115,9 +143,9 @@ export default function CustomerDashboard() {
                     </h2>
 
                     {bookings.length === 0 ? (
-                        <p className="text-slate-500">
-                            You haven’t made any bookings yet
-                        </p>
+                        <Card className="p-8 text-center text-slate-500">
+                            You haven’t made any bookings yet.
+                        </Card>
                     ) : (
                         <div className="space-y-4">
                             {bookings.map((b) => (
@@ -134,7 +162,7 @@ export default function CustomerDashboard() {
                                         </p>
                                     </div>
 
-                                    <Badge status={b.status} />
+                                    <Badge status={statusLabel[b.status] || b.status} />
                                 </Card>
                             ))}
                         </div>
