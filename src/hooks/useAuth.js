@@ -25,6 +25,7 @@ export const useAuth = () => {
     sessionStorage.setItem("token", res.token);
     const me = await apiRequest("/auth/me");
     setUser(me);
+    return me;
   };
 
   const logout = () => {

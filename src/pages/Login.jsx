@@ -1,21 +1,23 @@
 import { useState } from "react";
 import Button from "../components/Button";
 import Card from "../components/Card";
-import { useNavigate } from "react-router-dom";
 
-
-export default function Login({ onLogin, error, onSwitch }) {
+export default function Login({
+    onLogin,
+    error,
+    expectedRole,
+    title,
+    subtitle,
+}) {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [localError, setLocalError] = useState("");
     const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
 
     const isValidEmail = (email) =>
         /^\S+@\S+\.\S+$/.test(email);
 
-    const canSubmit =
-        isValidEmail(email) && password.length > 0;
+    const canSubmit = isValidEmail(email) && password.length > 0;
 
     const handleSubmit = async () => {
         setLocalError("");
@@ -27,10 +29,18 @@ export default function Login({ onLogin, error, onSwitch }) {
 
         try {
             setLoading(true);
-            await onLogin(
+            const user = await onLogin(
                 email.trim().toLowerCase(),
                 password
             );
+
+            if (user.role !== expectedRole) {
+                throw new Error(
+                    `This account is not a ${expectedRole} account`
+                );
+            }
+        } catch (e) {
+            setLocalError(e.message);
         } finally {
             setLoading(false);
         }
@@ -40,12 +50,8 @@ export default function Login({ onLogin, error, onSwitch }) {
         <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
             <Card>
                 <div className="w-80">
-                    <h2 className="text-2xl font-semibold mb-2">
-                        Welcome back
-                    </h2>
-                    <p className="text-sm text-gray-500 mb-6">
-                        Sign in to manage your services
-                    </p>
+                    <h2 className="text-2xl font-semibold mb-2">{title}</h2>
+                    <p className="text-sm text-gray-500 mb-6">{subtitle}</p>
 
                     {(error || localError) && (
                         <p className="text-sm text-red-600 mb-4">
@@ -74,17 +80,6 @@ export default function Login({ onLogin, error, onSwitch }) {
                     >
                         {loading ? "Signing in..." : "Sign in"}
                     </Button>
-
-                    <p className="text-sm text-gray-500 mt-4 text-center">
-                        Don’t have an account?{" "}
-                        <button
-                            className="text-black underline"
-                            onClick={() => navigate("/signup")}
-                        >
-                            Sign up
-                        </button>
-                    </p>
-
                 </div>
             </Card>
         </div>

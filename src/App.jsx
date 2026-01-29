@@ -22,42 +22,46 @@ export default function App() {
     return (
       <Routes>
         <Route
-          path="/login"
+          path="/login/customer"
           element={
             <Login
-              onLogin={async (email, password) => {
-                try {
-                  await login(email, password);
-                } catch (e) {
-                  setError(e.message);
-                }
-              }}
-              error={error}
+              expectedRole="customer"
+              title="Customer Login"
+              subtitle="Book home services easily"
+              onLogin={login}
             />
           }
         />
 
         <Route
-          path="/signup"
+          path="/login/provider"
           element={
-            <Signup
-              onSignup={async (data) => {
-                try {
-                  await apiRequest("/auth/register", "POST", data);
-                  await login(data.email, data.password);
-                } catch (e) {
-                  setError(e.message);
-                }
-              }}
-              error={error}
+            <Login
+              expectedRole="provider"
+              title="Provider Login"
+              subtitle="Manage your service jobs"
+              onLogin={login}
             />
           }
         />
 
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route
+          path="/login/admin"
+          element={
+            <Login
+              expectedRole="admin"
+              title="Admin Login"
+              subtitle="Manage platform operations"
+              onLogin={login}
+            />
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/login/customer" />} />
       </Routes>
     );
   }
+
 
 
   /* ---------------- LOGGED IN ---------------- */
