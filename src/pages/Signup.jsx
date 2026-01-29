@@ -127,7 +127,7 @@ export default function Signup({ onSignup, error, onSwitch }) {
                         >
                             Sign in
                         </button>
-                    </p>s
+                    </p>
                 </div>
             </Card>
         </div>
