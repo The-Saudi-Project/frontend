@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, Button, Input } from "../components/ui";
+import { Card, Button, Input } from "../components/Ui.jsx";
 
 export default function Login({
     onLogin,

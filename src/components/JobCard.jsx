@@ -1,4 +1,4 @@
-import { Button, Card, Badge } from "./Ui";
+import { Button, Card, Badge } from "./Ui.jsx";
 
 export default function JobCard({ booking, onAccept, onComplete }) {
     return (

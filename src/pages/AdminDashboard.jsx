@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
-import { Card, Button, Input } from "../components/Ui";
+import { Card, Button, Input } from "../components/Ui.jsx";
 
 export default function AdminDashboard() {
     const [services, setServices] = useState([]);

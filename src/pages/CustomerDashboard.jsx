@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
-import { Button, Card, Badge } from "../components/Ui";
+import { Button, Card, Badge } from "../components/Ui.jsx";
 
 export default function CustomerDashboard() {
     const [services, setServices] = useState([]);
