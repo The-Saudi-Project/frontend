@@ -32,12 +32,17 @@ export default function CustomerDashboard() {
         loadData().finally(() => setLoading(false));
     }, []);
 
-    const onBooked = async () => {
-        await loadData();
-        setSelectedService(null);
-        setSuccess("Booking request sent successfully!");
-        setTimeout(() => setSuccess(""), 3000);
+    const handleBooked = async () => {
+        const updated = await apiRequest("/bookings/customer");
+        setBookings(updated);
+
+        setTimeout(() => {
+            document
+                .getElementById("customer-bookings")
+                ?.scrollIntoView({ behavior: "smooth" });
+        }, 300);
     };
+
 
     if (loading) {
         return (
@@ -127,7 +132,7 @@ export default function CustomerDashboard() {
                 </section>
 
                 {/* BOOKINGS */}
-                <section className="mt-16">
+                <section id="customer-bookings" className="mt-16">
                     <h2 className="text-xl font-bold mb-6">
                         Your Bookings
                     </h2>
@@ -167,9 +172,10 @@ export default function CustomerDashboard() {
                 <BookingModal
                     service={selectedService}
                     onClose={() => setSelectedService(null)}
-                    onBooked={onBooked}
+                    onBooked={handleBooked}
                 />
             )}
+
         </div>
     );
 }

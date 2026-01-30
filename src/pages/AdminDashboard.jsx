@@ -179,93 +179,92 @@ export default function AdminDashboard() {
                     Publish Service
                 </Button>
             </Card>
-
-            {/* SERVICES TABLE */}
-            <div className="overflow-hidden border border-slate-100 rounded-2xl bg-white">
-                <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+            {/* SERVICES – DESKTOP TABLE */}
+            <div className="hidden md:block overflow-hidden border border-slate-100 rounded-2xl bg-white">
+                <table className="w-full text-left border-collapse">
+                    <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
                         <tr>
-                            <th className="px-6 py-4">Service</th>
-                            <th className="px-6 py-4">Price</th>
-                            <th className="px-6 py-4 text-right">Actions</th>
+                            <th className="px-6 py-4 font-semibold">Service Name</th>
+                            <th className="px-6 py-4 font-semibold">Price</th>
+                            <th className="px-6 py-4 font-semibold text-right">Actions</th>
                         </tr>
                     </thead>
 
-                    <tbody className="divide-y">
+                    <tbody className="divide-y divide-slate-100">
                         {services.map((s) => (
                             <tr key={s._id}>
-                                {editingService === s._id ? (
-                                    <>
-                                        <td className="px-6 py-4">
-                                            <input
-                                                className="w-full border rounded-lg px-3 py-2"
-                                                value={editName}
-                                                onChange={(e) =>
-                                                    setEditName(e.target.value)
-                                                }
-                                            />
-                                        </td>
+                                <td className="px-6 py-4 font-medium">
+                                    {s.name}
+                                </td>
 
-                                        <td className="px-6 py-4">
-                                            <input
-                                                type="number"
-                                                className="w-full border rounded-lg px-3 py-2"
-                                                value={editPrice}
-                                                onChange={(e) =>
-                                                    setEditPrice(e.target.value)
-                                                }
-                                            />
-                                        </td>
+                                <td className="px-6 py-4 font-mono">
+                                    {s.price} SAR
+                                </td>
 
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button onClick={saveEdit}>
-                                                    Save
-                                                </Button>
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() =>
-                                                        setEditingService(null)
-                                                    }
-                                                >
-                                                    Cancel
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </>
-                                ) : (
-                                    <>
-                                        <td className="px-6 py-4 font-medium">
-                                            {s.name}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {s.price} SAR
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="secondary"
-                                                    onClick={() => startEdit(s)}
-                                                >
-                                                    Edit
-                                                </Button>
-                                                <Button
-                                                    variant="danger"
-                                                    onClick={() =>
-                                                        deleteService(s._id)
-                                                    }
-                                                >
-                                                    Remove
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </>
-                                )}
+                                <td className="px-6 py-4">
+                                    <div className="flex justify-end gap-2">
+                                        <Button
+                                            variant="secondary"
+                                            className="h-9 px-4 text-sm"
+                                            onClick={() => startEdit(s)}
+                                        >
+                                            Edit
+                                        </Button>
+
+                                        <Button
+                                            variant="danger"
+                                            className="h-9 px-4 text-sm"
+                                            onClick={() => deleteService(s._id)}
+                                        >
+                                            Remove
+                                        </Button>
+                                    </div>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
+
+            {/* SERVICES – MOBILE CARDS */}
+            <div className="md:hidden space-y-4">
+                {services.map((s) => (
+                    <Card key={s._id} className="p-4">
+                        <div className="space-y-2">
+                            <p className="font-semibold text-slate-900">
+                                {s.name}
+                            </p>
+
+                            <p className="text-sm text-slate-500">
+                                {s.description || "No description"}
+                            </p>
+
+                            <p className="font-bold text-emerald-600">
+                                {s.price} SAR
+                            </p>
+                        </div>
+
+                        <div className="flex gap-2 mt-4">
+                            <Button
+                                variant="secondary"
+                                className="flex-1"
+                                onClick={() => startEdit(s)}
+                            >
+                                Edit
+                            </Button>
+
+                            <Button
+                                variant="danger"
+                                className="flex-1"
+                                onClick={() => deleteService(s._id)}
+                            >
+                                Remove
+                            </Button>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+
         </div>
     );
 }

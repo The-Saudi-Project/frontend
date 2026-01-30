@@ -13,12 +13,14 @@ const TIME_SLOTS = [
 export default function BookingModal({ service, onClose, onBooked }) {
     const [date, setDate] = useState("");
     const [time, setTime] = useState("");
-    const [showTimePicker, setShowTimePicker] = useState(false);
+
     const [customerName, setCustomerName] = useState("");
     const [customerPhone, setCustomerPhone] = useState("");
     const [customerAddress, setCustomerAddress] = useState("");
     const [notes, setNotes] = useState("");
+
     const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
     const [error, setError] = useState("");
 
     const submit = async () => {
@@ -41,8 +43,13 @@ export default function BookingModal({ service, onClose, onBooked }) {
                 customerAddress,
                 notes,
             });
+
+            setSuccess(true);
             onBooked();
-            onClose();
+
+            setTimeout(() => {
+                onClose();
+            }, 1500);
         } catch (e) {
             setError(e.message);
         } finally {
@@ -52,91 +59,122 @@ export default function BookingModal({ service, onClose, onBooked }) {
 
     return (
         <Modal title={`Book ${service.name}`} onClose={onClose}>
-            <div className="space-y-6">
-
-                {error && (
-                    <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">
-                        {error}
+            {/* SUCCESS STATE */}
+            {success ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-6 animate-bounce">
+                        <svg
+                            className="w-8 h-8 text-emerald-600"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                            viewBox="0 0 24 24"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M5 13l4 4L19 7"
+                            />
+                        </svg>
                     </div>
-                )}
 
-                {/* CUSTOMER DETAILS */}
-                <div className="space-y-4">
-                    <Input label="Full Name *" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-                    <Input label="Phone Number *" placeholder="+966 5X XXX XXXX" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
-                    <Input label="Address *" placeholder="House / Apartment, Area" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} />
-                    <Input label="Notes (optional)" placeholder="Any special instructions" value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    <h3 className="text-xl font-bold text-slate-900">
+                        Booking Confirmed
+                    </h3>
+                    <p className="text-slate-500 mt-2">
+                        We’ll notify you once a provider is assigned.
+                    </p>
                 </div>
+            ) : (
+                <div className="space-y-6 overflow-y-auto max-h-[65vh] pr-1">
 
-                {/* DATE */}
-                <div>
-                    <p className="text-sm font-semibold mb-2">Select Date *</p>
-                    <input
-                        type="date"
-                        className="w-full border rounded-xl px-4 py-3"
-                        min={new Date().toISOString().split("T")[0]}
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                    />
-                </div>
+                    {error && (
+                        <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">
+                            {error}
+                        </div>
+                    )}
 
-                {/* TIME */}
-                <div className="relative">
-                    <p className="text-sm font-semibold mb-2">Select Time *</p>
+                    {/* CUSTOMER DETAILS */}
+                    <div className="space-y-4">
+                        <Input
+                            label="Full Name *"
+                            value={customerName}
+                            onChange={(e) => setCustomerName(e.target.value)}
+                        />
+                        <Input
+                            label="Phone Number *"
+                            placeholder="+966 5X XXX XXXX"
+                            value={customerPhone}
+                            onChange={(e) => setCustomerPhone(e.target.value)}
+                        />
+                        <Input
+                            label="Address *"
+                            placeholder="House / Apartment, Area"
+                            value={customerAddress}
+                            onChange={(e) => setCustomerAddress(e.target.value)}
+                        />
+                        <Input
+                            label="Notes (optional)"
+                            placeholder="Any special instructions"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
 
-                    {/* Trigger */}
-                    <button
-                        type="button"
-                        onClick={() => setShowTimePicker((v) => !v)}
-                        className="w-full flex justify-between items-center border rounded-xl px-4 py-3 text-left"
-                    >
-                        <span className={time ? "text-slate-900" : "text-slate-400"}>
-                            {time || "Select a time"}
-                        </span>
-                        <span className="text-slate-400">▾</span>
-                    </button>
+                    {/* DATE */}
+                    <div>
+                        <p className="text-sm font-semibold mb-2">Select Date *</p>
+                        <input
+                            type="date"
+                            className="w-full border rounded-xl px-4 py-3"
+                            min={new Date().toISOString().split("T")[0]}
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                        />
+                    </div>
 
-                    {/* Dropdown */}
-                    {showTimePicker && (
-                        <div
-                            className="
-      absolute z-20 mt-2 w-full
-      bg-white border rounded-xl shadow-lg
-      max-h-40 overflow-y-auto
-    "                        >
+                    {/* TIME — GRID (FIXED UX) */}
+                    <div>
+                        <p className="text-sm font-semibold mb-3">Select Time *</p>
+
+                        <div className="grid grid-cols-3 gap-2">
                             {TIME_SLOTS.map((t) => (
                                 <button
                                     key={t}
                                     type="button"
-                                    onClick={() => {
-                                        setTime(t);
-                                        setShowTimePicker(false);
-                                    }}
+                                    onClick={() => setTime(t)}
                                     className={`
-          w-full text-left px-4 py-2 text-sm
-          transition rounded-lg
-          ${time === t
-                                            ? "bg-emerald-600 text-white"
-                                            : "hover:bg-slate-100"
+                                        py-2 rounded-lg text-sm font-medium
+                                        border transition
+                                        ${time === t
+                                            ? "bg-emerald-600 text-white border-emerald-600"
+                                            : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                                         }
-        `}
+                                    `}
                                 >
                                     {t}
                                 </button>
                             ))}
                         </div>
-                    )}
+
+                        {!time && (
+                            <p className="text-xs text-slate-400 mt-2">
+                                Please select a preferred time slot
+                            </p>
+                        )}
+                    </div>
+
+                    {/* ACTIONS */}
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="secondary" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button onClick={submit} disabled={loading}>
+                            {loading ? "Booking..." : "Confirm Booking"}
+                        </Button>
+                    </div>
                 </div>
-                {/* ACTIONS */}
-                <div className="flex justify-end gap-3 pt-4">
-                    <Button variant="secondary" onClick={onClose}>
-                        Cancel
-                    </Button>
-                    <Button onClick={submit} disabled={loading}>
-                        {loading ? "Booking..." : "Confirm Booking"}
-                    </Button>
-                </div>
-            </div>
+            )}
         </Modal>
     );
 }
