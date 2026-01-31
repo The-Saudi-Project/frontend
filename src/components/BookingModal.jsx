@@ -35,6 +35,7 @@ export default function BookingModal({ service, onClose, onBooked }) {
 
         try {
             setLoading(true);
+
             await apiRequest("/bookings", "POST", {
                 serviceId: service._id,
                 scheduledAt,
@@ -45,57 +46,70 @@ export default function BookingModal({ service, onClose, onBooked }) {
             });
 
             setSuccess(true);
-            onBooked();
+            onBooked?.();
 
             setTimeout(() => {
                 onClose();
-            }, 1500);
+            }, 1400);
         } catch (e) {
-            setError(e.message);
+            setError(e.message || "Failed to create booking");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Modal title={`Book ${service.name}`} onClose={onClose}>
+        <Modal
+            isOpen
+            onClose={onClose}
+            title={`Book ${service.name}`}
+            footer={
+                !success && (
+                    <>
+                        <Button variant="secondary" className="flex-1" onClick={onClose}>
+                            Cancel
+                        </Button>
+                        <Button className="flex-1" onClick={submit} disabled={loading}>
+                            {loading ? "Booking…" : "Confirm"}
+                        </Button>
+                    </>
+                )
+            }
+        >
             {/* SUCCESS STATE */}
             {success ? (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-6 animate-bounce">
+                <div className="py-20 text-center">
+                    <div className="w-14 h-14 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-5">
                         <svg
-                            className="w-8 h-8 text-emerald-600"
+                            className="w-7 h-7 text-emerald-600"
                             fill="none"
                             stroke="currentColor"
                             strokeWidth="3"
                             viewBox="0 0 24 24"
                         >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                            />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
 
-                    <h3 className="text-xl font-bold text-slate-900">
-                        Booking Confirmed
+                    <h3 className="text-lg font-semibold text-slate-900">
+                        Booking confirmed
                     </h3>
-                    <p className="text-slate-500 mt-2">
-                        We’ll notify you once a provider is assigned.
+                    <p className="text-sm text-slate-500 mt-1">
+                        A provider will be assigned shortly.
                     </p>
                 </div>
             ) : (
-                <div className="space-y-6 overflow-y-auto max-h-[65vh] pr-1">
+                <div className="space-y-8">
 
+                    {/* ERROR */}
                     {error && (
-                        <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-xl">
+                        <div className="bg-red-50 border border-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">
                             {error}
                         </div>
                     )}
 
                     {/* CUSTOMER DETAILS */}
-                    <div className="space-y-4">
+                    <section className="space-y-4">
                         <Input
                             label="Full Name *"
                             value={customerName}
@@ -119,23 +133,27 @@ export default function BookingModal({ service, onClose, onBooked }) {
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                         />
-                    </div>
+                    </section>
 
                     {/* DATE */}
-                    <div>
-                        <p className="text-sm font-semibold mb-2">Select Date *</p>
+                    <section className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                            Preferred Date
+                        </p>
                         <input
                             type="date"
-                            className="w-full border rounded-xl px-4 py-3"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                             min={new Date().toISOString().split("T")[0]}
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                         />
-                    </div>
+                    </section>
 
-                    {/* TIME — GRID (FIXED UX) */}
-                    <div>
-                        <p className="text-sm font-semibold mb-3">Select Time *</p>
+                    {/* TIME */}
+                    <section className="space-y-3">
+                        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                            Preferred Time
+                        </p>
 
                         <div className="grid grid-cols-3 gap-2">
                             {TIME_SLOTS.map((t) => (
@@ -144,13 +162,13 @@ export default function BookingModal({ service, onClose, onBooked }) {
                                     type="button"
                                     onClick={() => setTime(t)}
                                     className={`
-                                        py-2 rounded-lg text-sm font-medium
-                                        border transition
-                                        ${time === t
+                    py-2.5 rounded-xl text-sm font-medium transition
+                    border
+                    ${time === t
                                             ? "bg-emerald-600 text-white border-emerald-600"
-                                            : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                                         }
-                                    `}
+                  `}
                                 >
                                     {t}
                                 </button>
@@ -158,21 +176,18 @@ export default function BookingModal({ service, onClose, onBooked }) {
                         </div>
 
                         {!time && (
-                            <p className="text-xs text-slate-400 mt-2">
-                                Please select a preferred time slot
+                            <p className="text-xs text-slate-400">
+                                Select a time slot to continue
                             </p>
                         )}
-                    </div>
+                    </section>
 
-                    {/* ACTIONS */}
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button variant="secondary" onClick={onClose}>
-                            Cancel
-                        </Button>
-                        <Button onClick={submit} disabled={loading}>
-                            {loading ? "Booking..." : "Confirm Booking"}
-                        </Button>
-                    </div>
+                    {/* FUTURE PLACEHOLDERS */}
+                    {/*
+            - Pricing breakdown
+            - Coupons / offers
+            - Map preview
+          */}
                 </div>
             )}
         </Modal>

@@ -9,6 +9,8 @@ export default function AdminBookings() {
     const [loading, setLoading] = useState(true);
     const [assigning, setAssigning] = useState(null);
 
+    /* ---------------- LOAD BOOKINGS ---------------- */
+
     const loadBookings = async () => {
         const res = await apiRequest("/bookings");
         setBookings(res);
@@ -17,6 +19,8 @@ export default function AdminBookings() {
     useEffect(() => {
         loadBookings().finally(() => setLoading(false));
     }, []);
+
+    /* ---------------- LOAD PROVIDERS (PER BOOKING) ---------------- */
 
     const loadProviders = async (bookingId, scheduledAt) => {
         if (availableProviders[bookingId]) return;
@@ -31,6 +35,8 @@ export default function AdminBookings() {
         }));
     };
 
+    /* ---------------- ASSIGN PROVIDER ---------------- */
+
     const assignProvider = async (bookingId, providerId) => {
         try {
             setAssigning(bookingId);
@@ -44,19 +50,33 @@ export default function AdminBookings() {
     };
 
     if (loading) {
-        return <div className="p-8 text-slate-500">Loading bookings…</div>;
+        return (
+            <div className="p-8 text-slate-500 text-sm">
+                Loading bookings…
+            </div>
+        );
     }
 
     return (
-        <div className="p-6 max-w-6xl mx-auto space-y-6">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
             <AdminNav />
-            <h1 className="text-2xl font-bold">All Bookings</h1>
 
-            {/* ---------------- DESKTOP TABLE ---------------- */}
+            <header className="space-y-1">
+                <h1 className="text-2xl font-semibold text-slate-900">
+                    All Bookings
+                </h1>
+                <p className="text-sm text-slate-500">
+                    Assign providers and monitor service progress
+                </p>
+            </header>
+
+            {/* ======================================================
+               DESKTOP TABLE
+            ====================================================== */}
             <div className="hidden md:block">
                 <Card className="overflow-hidden">
-                    <table className="w-full text-left">
-                        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
+                    <table className="w-full text-left border-collapse">
+                        <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-400">
                             <tr>
                                 <th className="px-6 py-4">Service</th>
                                 <th className="px-6 py-4">Customer</th>
@@ -65,40 +85,77 @@ export default function AdminBookings() {
                                 <th className="px-6 py-4">Provider</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y">
+
+                        <tbody className="divide-y divide-slate-100">
                             {bookings.map((b) => (
-                                <tr key={b._id}>
-                                    <td className="px-6 py-4 font-medium">
+                                <tr
+                                    key={b._id}
+                                    className="hover:bg-slate-50/50 transition"
+                                >
+                                    <td className="px-6 py-4 font-medium text-slate-900">
                                         {b.service?.name}
                                     </td>
-                                    <td className="px-6 py-4">{b.customerName}</td>
+
+                                    <td className="px-6 py-4 text-slate-700">
+                                        {b.customerName}
+                                    </td>
+
                                     <td className="px-6 py-4 text-sm text-slate-500">
                                         {new Date(b.scheduledAt).toLocaleString()}
                                     </td>
+
                                     <td className="px-6 py-4">
                                         <Badge status={b.status} />
                                     </td>
+
                                     <td className="px-6 py-4">
-                                        <select
-                                            className="border rounded px-3 py-1.5 text-sm w-full max-w-[200px]"
-                                            value={b.provider?._id || ""}
-                                            disabled={assigning === b._id}
-                                            onFocus={() =>
-                                                loadProviders(b._id, b.scheduledAt)
-                                            }
-                                            onChange={(e) =>
-                                                assignProvider(b._id, e.target.value)
-                                            }
-                                        >
-                                            <option value="" disabled>
-                                                Assign provider
-                                            </option>
-                                            {availableProviders[b._id]?.map((p) => (
-                                                <option key={p._id} value={p._id}>
-                                                    {p.name}
+                                        {["COMPLETED", "CANCELLED"].includes(b.status) ? (
+                                            <span className="text-sm text-slate-400">
+                                                {b.provider?.name || "—"}
+                                            </span>
+                                        ) : (
+                                            <select
+                                                className="
+                                                    w-full max-w-[220px]
+                                                    px-3 py-2
+                                                    text-sm
+                                                    rounded-xl
+                                                    border border-slate-200
+                                                    bg-white
+                                                    focus:outline-none
+                                                    focus:ring-2 focus:ring-emerald-500/20
+                                                "
+                                                value={b.provider?._id || ""}
+                                                disabled={assigning === b._id}
+                                                onFocus={() =>
+                                                    loadProviders(
+                                                        b._id,
+                                                        b.scheduledAt
+                                                    )
+                                                }
+                                                onChange={(e) =>
+                                                    assignProvider(
+                                                        b._id,
+                                                        e.target.value
+                                                    )
+                                                }
+                                            >
+                                                <option value="" disabled>
+                                                    Assign provider
                                                 </option>
-                                            ))}
-                                        </select>
+
+                                                {availableProviders[b._id]?.map(
+                                                    (p) => (
+                                                        <option
+                                                            key={p._id}
+                                                            value={p._id}
+                                                        >
+                                                            {p.name}
+                                                        </option>
+                                                    )
+                                                )}
+                                            </select>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -107,43 +164,62 @@ export default function AdminBookings() {
                 </Card>
             </div>
 
-            {/* ---------------- MOBILE CARDS ---------------- */}
+            {/* ======================================================
+               MOBILE CARDS
+            ====================================================== */}
             <div className="md:hidden space-y-4">
                 {bookings.map((b) => (
                     <Card key={b._id} className="p-4 space-y-3">
-                        <div className="flex justify-between">
-                            <p className="font-semibold">{b.service?.name}</p>
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-slate-900">
+                                {b.service?.name}
+                            </h3>
                             <Badge status={b.status} />
                         </div>
 
-                        <div className="text-sm text-slate-500">
-                            <p><strong>Customer:</strong> {b.customerName}</p>
+                        <div className="text-sm text-slate-500 space-y-1">
                             <p>
-                                <strong>Time:</strong>{" "}
+                                <span className="font-medium">Customer:</span>{" "}
+                                {b.customerName}
+                            </p>
+                            <p>
+                                <span className="font-medium">Time:</span>{" "}
                                 {new Date(b.scheduledAt).toLocaleString()}
                             </p>
                         </div>
 
-                        <select
-                            className="border rounded px-3 py-2 text-sm w-full"
-                            value={b.provider?._id || ""}
-                            disabled={assigning === b._id}
-                            onFocus={() =>
-                                loadProviders(b._id, b.scheduledAt)
-                            }
-                            onChange={(e) =>
-                                assignProvider(b._id, e.target.value)
-                            }
-                        >
-                            <option value="" disabled>
-                                Assign provider
-                            </option>
-                            {availableProviders[b._id]?.map((p) => (
-                                <option key={p._id} value={p._id}>
-                                    {p.name}
+                        {!["COMPLETED", "CANCELLED"].includes(b.status) && (
+                            <select
+                                className="
+                                    w-full
+                                    px-3 py-2
+                                    text-sm
+                                    rounded-xl
+                                    border border-slate-200
+                                    bg-white
+                                    focus:outline-none
+                                    focus:ring-2 focus:ring-emerald-500/20
+                                "
+                                value={b.provider?._id || ""}
+                                disabled={assigning === b._id}
+                                onFocus={() =>
+                                    loadProviders(b._id, b.scheduledAt)
+                                }
+                                onChange={(e) =>
+                                    assignProvider(b._id, e.target.value)
+                                }
+                            >
+                                <option value="" disabled>
+                                    Assign provider
                                 </option>
-                            ))}
-                        </select>
+
+                                {availableProviders[b._id]?.map((p) => (
+                                    <option key={p._id} value={p._id}>
+                                        {p.name}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </Card>
                 ))}
             </div>

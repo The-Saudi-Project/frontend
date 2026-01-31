@@ -1,26 +1,27 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../api/client";
+import { Button, Input, Card } from "../components/Ui.jsx";
 
 export default function Signup({ onSignup }) {
     const navigate = useNavigate();
 
-    /* ---------- Form state ---------- */
+    /* ---------- FORM STATE ---------- */
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState("customer");
 
-    /* ---------- Provider services ---------- */
+    /* ---------- PROVIDER SERVICES ---------- */
     const [services, setServices] = useState([]);
     const [selectedServices, setSelectedServices] = useState([]);
 
-    /* ---------- UI state ---------- */
+    /* ---------- UI STATE ---------- */
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    /* ---------- Helpers ---------- */
+    /* ---------- HELPERS ---------- */
     const isStrongPassword = (pwd) =>
         pwd.length >= 8 && /[a-zA-Z]/.test(pwd) && /\d/.test(pwd);
 
@@ -32,14 +33,14 @@ export default function Signup({ onSignup }) {
         );
     };
 
-    /* ---------- Load admin-created services ---------- */
+    /* ---------- LOAD SERVICES ---------- */
     useEffect(() => {
         apiRequest("/services/public")
             .then(setServices)
             .catch(() => setError("Failed to load services"));
     }, []);
 
-    /* ---------- Submit ---------- */
+    /* ---------- SUBMIT ---------- */
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
@@ -83,19 +84,22 @@ export default function Signup({ onSignup }) {
     };
 
     return (
-        <div className="min-h-screen bg-[#FDFCF9] flex flex-col lg:flex-row text-slate-900">
-            {/* LEFT BRAND PANEL */}
-            <div className="hidden lg:flex lg:w-1/2 bg-emerald-900 p-16 flex-col justify-between relative overflow-hidden">
+        <div className="min-h-screen bg-[#FDFCF9] flex flex-col lg:flex-row">
+
+            {/* ---------------- LEFT BRAND PANEL ---------------- */}
+            <div className="hidden lg:flex lg:w-1/2 bg-emerald-900 p-16 flex-col justify-between">
                 <div>
                     <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mb-8">
                         <span className="text-white font-bold text-2xl">S</span>
                     </div>
+
                     <h1 className="text-4xl font-bold text-white leading-tight max-w-md">
-                        The standard for home services in the Kingdom.
+                        Join the future of home services.
                     </h1>
+
                     <p className="text-emerald-100/80 mt-6 text-lg max-w-sm">
-                        Join thousands of households and professionals on Saudi
-                        Arabia’s most trusted service marketplace.
+                        Saudi Arabia’s premium marketplace for trusted
+                        professionals and modern households.
                     </p>
                 </div>
 
@@ -104,38 +108,49 @@ export default function Signup({ onSignup }) {
                 </p>
             </div>
 
-            {/* RIGHT FORM PANEL */}
+            {/* ---------------- RIGHT FORM PANEL ---------------- */}
             <div className="flex-1 flex items-center justify-center p-6 md:p-12">
-                <div className="w-full max-w-md">
-                    <h2 className="text-3xl font-bold">Create an account</h2>
-                    <p className="text-slate-500 mt-2 mb-8">
-                        Enter your details to get started
-                    </p>
+                <Card className="w-full max-w-md p-8 sm:p-10">
 
+                    {/* HEADER */}
+                    <div className="mb-8">
+                        <h2 className="text-3xl font-semibold text-slate-900">
+                            Create an account
+                        </h2>
+                        <p className="text-slate-500 mt-2">
+                            Get started in less than a minute
+                        </p>
+                    </div>
+
+                    {/* ERROR */}
                     {error && (
-                        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                        <div className="mb-4 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-4 py-2">
                             {error}
                         </div>
                     )}
 
-                    <form className="space-y-5" onSubmit={handleSubmit}>
+                    <form className="space-y-6" onSubmit={handleSubmit}>
+
                         {/* ROLE SWITCH */}
                         <div className="flex p-1 bg-slate-100 rounded-xl">
                             <button
                                 type="button"
                                 onClick={() => setRole("customer")}
-                                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg ${role === "customer"
-                                        ? "bg-white text-emerald-700 shadow"
+                                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition
+                                    ${role === "customer"
+                                        ? "bg-white shadow text-emerald-700"
                                         : "text-slate-500"
                                     }`}
                             >
                                 Customer
                             </button>
+
                             <button
                                 type="button"
                                 onClick={() => setRole("provider")}
-                                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg ${role === "provider"
-                                        ? "bg-white text-emerald-700 shadow"
+                                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition
+                                    ${role === "provider"
+                                        ? "bg-white shadow text-emerald-700"
                                         : "text-slate-500"
                                     }`}
                             >
@@ -144,33 +159,33 @@ export default function Signup({ onSignup }) {
                         </div>
 
                         {/* INPUTS */}
-                        <input
-                            className="w-full px-4 py-3 rounded-xl border"
-                            placeholder="Full name"
+                        <Input
+                            label="Full Name"
+                            placeholder="John Doe"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                         />
 
-                        <input
-                            className="w-full px-4 py-3 rounded-xl border"
-                            placeholder="Email address"
+                        <Input
+                            label="Email Address"
+                            type="email"
+                            placeholder="you@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                         />
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Input
+                                label="Password"
                                 type="password"
-                                className="w-full px-4 py-3 rounded-xl border"
-                                placeholder="Password"
+                                placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
-
-                            <input
+                            <Input
+                                label="Confirm Password"
                                 type="password"
-                                className="w-full px-4 py-3 rounded-xl border"
-                                placeholder="Confirm password"
+                                placeholder="••••••••"
                                 value={confirmPassword}
                                 onChange={(e) =>
                                     setConfirmPassword(e.target.value)
@@ -180,8 +195,8 @@ export default function Signup({ onSignup }) {
 
                         {/* PROVIDER SERVICES */}
                         {role === "provider" && (
-                            <div className="border-t pt-4">
-                                <p className="text-sm font-semibold mb-3">
+                            <div className="border-t pt-6 space-y-4">
+                                <p className="text-sm font-semibold text-slate-700">
                                     Services you provide
                                 </p>
 
@@ -189,9 +204,10 @@ export default function Signup({ onSignup }) {
                                     {services.map((s) => (
                                         <label
                                             key={s._id}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-lg border cursor-pointer ${selectedServices.includes(s._id)
+                                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-sm transition
+                                                ${selectedServices.includes(s._id)
                                                     ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-                                                    : "border-slate-200"
+                                                    : "border-slate-200 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input
@@ -200,25 +216,33 @@ export default function Signup({ onSignup }) {
                                                 checked={selectedServices.includes(s._id)}
                                                 onChange={() => toggleService(s._id)}
                                             />
-                                            <span className="text-sm">{s.name}</span>
+                                            {s.name}
                                         </label>
                                     ))}
                                 </div>
 
-                                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3 mt-4">
-                                    Providers will be reviewed before receiving job requests.
+                                {/* FUTURE PLACEHOLDER */}
+                                {/*
+                                <div className="text-xs text-slate-400">
+                                    Verification documents • Availability • Pricing
+                                </div>
+                                */}
+
+                                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3">
+                                    Providers are reviewed before receiving job requests.
                                 </p>
                             </div>
                         )}
 
                         {/* CTA */}
-                        <button
+                        <Button
+                            className="w-full py-4"
                             disabled={loading}
-                            className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold hover:bg-emerald-700 disabled:opacity-50"
                         >
                             {loading ? "Creating account..." : "Create account"}
-                        </button>
+                        </Button>
 
+                        {/* FOOTER */}
                         <p className="text-sm text-slate-500 text-center">
                             Already have an account?{" "}
                             <button
@@ -230,7 +254,7 @@ export default function Signup({ onSignup }) {
                             </button>
                         </p>
                     </form>
-                </div>
+                </Card>
             </div>
         </div>
     );

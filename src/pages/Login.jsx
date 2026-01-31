@@ -33,45 +33,56 @@ export default function Login({
             await onLogin(
                 email.trim().toLowerCase(),
                 password,
-                expectedRole // ✅ pass role intent
+                expectedRole // role intent enforced
             );
         } catch (e) {
-            setError(e.message);
+            setError(e.message || "Login failed");
         } finally {
             setLoading(false);
         }
     };
 
-
     return (
-        <div className="min-h-screen bg-[#FDFCF9] flex flex-col lg:flex-row text-slate-900">
-            {/* LEFT BRAND PANEL */}
-            <div className="hidden lg:flex lg:w-1/2 bg-emerald-900 p-16 flex-col justify-between relative overflow-hidden">
-                <div>
-                    <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mb-8">
-                        <span className="text-white font-bold text-2xl">S</span>
+        <div className="min-h-screen bg-white flex flex-col lg:flex-row text-slate-900">
+
+            {/* ================= LEFT BRAND PANEL (DESKTOP) ================= */}
+            <div className="hidden lg:flex lg:w-1/2 bg-emerald-900 relative overflow-hidden">
+                <div className="flex flex-col justify-between p-16 w-full">
+                    <div>
+                        {/* LOGO */}
+                        <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center mb-10">
+                            <span className="text-white font-bold text-2xl">
+                                S
+                            </span>
+                        </div>
+
+                        <h1 className="text-4xl font-serif text-white leading-tight max-w-md">
+                            Premium services,
+                            <br />
+                            <span className="italic text-emerald-300">
+                                effortlessly managed.
+                            </span>
+                        </h1>
+
+                        <p className="text-emerald-100/80 mt-6 text-lg max-w-sm">
+                            Access your dashboard to manage bookings, services,
+                            and assignments on Saudi Services.
+                        </p>
                     </div>
 
-                    <h1 className="text-4xl font-bold text-white leading-tight max-w-md">
-                        Welcome back to Saudi Services
-                    </h1>
-                    <p className="text-emerald-100/80 mt-6 text-lg max-w-sm">
-                        Sign in to manage bookings, services, and jobs on the
-                        Kingdom’s trusted home-services platform.
+                    <p className="text-emerald-200/60 text-sm">
+                        © 2026 Saudi Services Marketplace
                     </p>
                 </div>
-
-                <p className="text-emerald-200/60 text-sm">
-                    © 2026 Saudi Services Marketplace
-                </p>
             </div>
 
-            {/* RIGHT FORM PANEL */}
-            <div className="flex-1 flex items-center justify-center p-6 md:p-12">
+            {/* ================= RIGHT FORM PANEL ================= */}
+            <div className="flex-1 flex items-center justify-center px-4 py-10 sm:px-6 lg:px-12">
                 <div className="w-full max-w-md">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <h2 className="text-3xl font-bold tracking-tight">
+
+                    {/* HEADER */}
+                    <div className="mb-10">
+                        <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
                             {title}
                         </h2>
                         <p className="text-slate-500 mt-2">
@@ -79,49 +90,95 @@ export default function Login({
                         </p>
                     </div>
 
-                    {/* Error */}
+                    {/* ERROR */}
                     {error && (
-                        <div className="mb-4 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-3 py-2">
+                        <div className="mb-5 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 text-sm">
                             {error}
                         </div>
                     )}
 
-                    {/* Form */}
-                    <form className="space-y-5" onSubmit={handleSubmit}>
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    {/* FORM */}
+                    <form
+                        className="space-y-6"
+                        onSubmit={handleSubmit}
+                    >
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">
                                 Email address
                             </label>
                             <input
                                 type="email"
                                 placeholder="you@example.com"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                                onChange={(e) =>
+                                    setEmail(e.target.value)
+                                }
+                                className="
+                                    w-full px-4 py-3 rounded-xl
+                                    border border-slate-200
+                                    bg-slate-50/50
+                                    focus:outline-none
+                                    focus:ring-2 focus:ring-emerald-500/20
+                                    focus:border-emerald-500
+                                    transition
+                                "
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-1">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">
                                 Password
                             </label>
                             <input
                                 type="password"
                                 placeholder="••••••••"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all"
+                                onChange={(e) =>
+                                    setPassword(e.target.value)
+                                }
+                                className="
+                                    w-full px-4 py-3 rounded-xl
+                                    border border-slate-200
+                                    bg-slate-50/50
+                                    focus:outline-none
+                                    focus:ring-2 focus:ring-emerald-500/20
+                                    focus:border-emerald-500
+                                    transition
+                                "
                             />
                         </div>
 
+                        {/* FUTURE: Remember me / OTP / SSO */}
+                        {/*
+                        <div className="flex items-center justify-between text-sm">
+                            <label className="flex items-center gap-2">
+                                <input type="checkbox" />
+                                Remember me
+                            </label>
+                            <button className="text-emerald-600">
+                                Forgot password?
+                            </button>
+                        </div>
+                        */}
+
                         <button
+                            type="submit"
                             disabled={!canSubmit || loading}
-                            className="w-full bg-emerald-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:shadow-none"
+                            className="
+                                w-full py-4 rounded-xl font-semibold
+                                bg-emerald-600 text-white
+                                hover:bg-emerald-700
+                                active:scale-[0.98]
+                                shadow-lg shadow-emerald-200
+                                transition-all
+                                disabled:opacity-50
+                                disabled:shadow-none
+                            "
                         >
-                            {loading ? "Signing in..." : "Sign in"}
+                            {loading ? "Signing in…" : "Sign in"}
                         </button>
 
-                        {/* Footer */}
+                        {/* FOOTER */}
                         <p className="text-sm text-slate-500 text-center">
                             Don’t have an account?{" "}
                             <button

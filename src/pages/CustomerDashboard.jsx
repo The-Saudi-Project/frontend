@@ -5,7 +5,7 @@ import BookingModal from "../components/BookingModal";
 
 const statusLabel = {
     CREATED: "Requested",
-    ASSIGNED: "Provider Assigned",
+    ASSIGNED: "Assigned",
     IN_PROGRESS: "In Progress",
     COMPLETED: "Completed",
     CANCELLED: "Cancelled",
@@ -16,7 +16,7 @@ export default function CustomerDashboard() {
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedService, setSelectedService] = useState(null);
-    const [success, setSuccess] = useState("");
+    const [activeTab, setActiveTab] = useState("browse");
 
     const loadData = async () => {
         const [servicesRes, bookingsRes] = await Promise.all([
@@ -35,26 +35,22 @@ export default function CustomerDashboard() {
     const handleBooked = async () => {
         const updated = await apiRequest("/bookings/customer");
         setBookings(updated);
-
-        setTimeout(() => {
-            document
-                .getElementById("customer-bookings")
-                ?.scrollIntoView({ behavior: "smooth" });
-        }, 300);
+        setActiveTab("bookings");
     };
 
+    /* ================= LOADING ================= */
 
     if (loading) {
         return (
             <div className="min-h-screen bg-slate-50 p-6">
-                <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
                             className="bg-white p-6 rounded-2xl border border-slate-100 animate-pulse"
                         >
                             <div className="h-40 bg-slate-200 rounded-xl mb-4" />
-                            <div className="h-5 w-3/4 bg-slate-200 rounded mb-2" />
+                            <div className="h-4 w-3/4 bg-slate-200 rounded mb-2" />
                             <div className="h-4 w-full bg-slate-200 rounded" />
                             <div className="h-10 w-full bg-slate-200 rounded-xl mt-6" />
                         </div>
@@ -64,110 +60,140 @@ export default function CustomerDashboard() {
         );
     }
 
+    /* ================= UI ================= */
+
     return (
-        <div className="min-h-screen bg-slate-50 pb-24">
-            <main className="max-w-6xl mx-auto p-6">
+        <div className="min-h-screen bg-slate-50/50 pb-24">
+            <main className="max-w-7xl mx-auto px-4 py-8">
+
                 {/* HEADER */}
                 <header className="mb-10">
-                    <h1 className="text-3xl font-bold text-slate-900">
-                        Book a Service
+                    <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">
+                        Welcome 👋
                     </h1>
                     <p className="text-slate-500 mt-1">
-                        Trusted professionals at your doorstep
+                        Book trusted professionals at your convenience
                     </p>
                 </header>
 
-                {/* SUCCESS */}
-                {success && (
-                    <div className="mb-8 bg-emerald-50 border border-emerald-100 text-emerald-700 px-4 py-3 rounded-xl">
-                        {success}
-                    </div>
-                )}
+                {/* TABS */}
+                <div className="flex gap-8 mb-8 border-b border-slate-200">
+                    <button
+                        onClick={() => setActiveTab("browse")}
+                        className={`pb-4 text-sm font-medium relative transition
+                            ${activeTab === "browse"
+                                ? "text-emerald-600"
+                                : "text-slate-400 hover:text-slate-600"
+                            }`}
+                    >
+                        Services
+                        {activeTab === "browse" && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600" />
+                        )}
+                    </button>
 
-                {/* SERVICES */}
-                <section>
-                    <h2 className="text-xl font-bold mb-6">
-                        Available Services
-                    </h2>
+                    <button
+                        onClick={() => setActiveTab("bookings")}
+                        className={`pb-4 text-sm font-medium relative transition
+                            ${activeTab === "bookings"
+                                ? "text-emerald-600"
+                                : "text-slate-400 hover:text-slate-600"
+                            }`}
+                    >
+                        My Bookings
+                        {activeTab === "bookings" && (
+                            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600" />
+                        )}
+                    </button>
+                </div>
 
-                    {services.length === 0 ? (
-                        <Card className="p-8 text-center text-slate-500">
-                            No services available
-                        </Card>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {services.map((s) => (
-                                <Card
-                                    key={s._id}
-                                    className="p-5 flex flex-col justify-between hover:shadow-md transition-shadow"
-                                >
-                                    <div>
-                                        <div className="h-40 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400">
+                {/* ================= SERVICES ================= */}
+                {activeTab === "browse" && (
+                    <>
+                        {services.length === 0 ? (
+                            <Card className="p-10 text-center text-slate-500">
+                                No services available right now
+                            </Card>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {services.map((s) => (
+                                    <Card
+                                        key={s._id}
+                                        className="overflow-hidden hover:shadow-xl transition-all"
+                                    >
+                                        {/* IMAGE PLACEHOLDER */}
+                                        <div className="aspect-[16/10] bg-slate-100 flex items-center justify-center text-slate-300 text-sm">
                                             Service Image
+                                            {/* TODO: service.image */}
                                         </div>
 
-                                        <h3 className="font-bold text-lg text-slate-900">
-                                            {s.name}
-                                        </h3>
+                                        <div className="p-5 space-y-4">
+                                            <div>
+                                                <h3 className="font-semibold text-lg text-slate-900">
+                                                    {s.name}
+                                                </h3>
+                                                <p className="text-sm text-slate-500 mt-1 line-clamp-2">
+                                                    {s.description || "Professional service"}
+                                                </p>
+                                            </div>
 
-                                        <p className="text-slate-500 text-sm mt-1">
-                                            {s.description || "Professional service"}
-                                        </p>
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                                <span className="font-bold text-slate-900">
+                                                    {s.price} SAR
+                                                </span>
 
-                                        <p className="text-emerald-600 font-bold mt-4 text-xl">
-                                            {s.price} SAR
-                                        </p>
-                                    </div>
+                                                <Button
+                                                    onClick={() => setSelectedService(s)}
+                                                >
+                                                    Book
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
 
-                                    <Button
-                                        className="mt-6 w-full"
-                                        onClick={() => setSelectedService(s)}
+                {/* ================= BOOKINGS ================= */}
+                {activeTab === "bookings" && (
+                    <>
+                        {bookings.length === 0 ? (
+                            <Card className="p-10 text-center text-slate-500">
+                                You haven’t made any bookings yet
+                            </Card>
+                        ) : (
+                            <div className="space-y-4">
+                                {bookings.map((b) => (
+                                    <Card
+                                        key={b._id}
+                                        className="p-5 flex items-center justify-between"
                                     >
-                                        Book Now
-                                    </Button>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </section>
+                                        <div>
+                                            <p className="font-medium text-slate-900">
+                                                {b.service?.name}
+                                            </p>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                {new Date(b.scheduledAt).toLocaleString()}
+                                            </p>
+                                        </div>
 
-                {/* BOOKINGS */}
-                <section id="customer-bookings" className="mt-16">
-                    <h2 className="text-xl font-bold mb-6">
-                        Your Bookings
-                    </h2>
-
-                    {bookings.length === 0 ? (
-                        <Card className="p-8 text-center text-slate-500">
-                            You haven’t made any bookings yet
-                        </Card>
-                    ) : (
-                        <div className="space-y-4">
-                            {bookings.map((b) => (
-                                <Card
-                                    key={b._id}
-                                    className="p-5 flex items-center justify-between"
-                                >
-                                    <div>
-                                        <p className="font-semibold text-slate-900">
-                                            {b.service.name}
-                                        </p>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            {new Date(b.createdAt).toLocaleString()}
-                                        </p>
-                                    </div>
-
-                                    <Badge
-                                        status={statusLabel[b.status] || b.status}
-                                    />
-                                </Card>
-                            ))}
-                        </div>
-                    )}
-                </section>
+                                        <Badge
+                                            status={
+                                                statusLabel[b.status] ||
+                                                b.status
+                                            }
+                                        />
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
+                    </>
+                )}
             </main>
 
-            {/* BOOKING MODAL */}
+            {/* ================= BOOKING MODAL ================= */}
             {selectedService && (
                 <BookingModal
                     service={selectedService}
@@ -175,7 +201,6 @@ export default function CustomerDashboard() {
                     onBooked={handleBooked}
                 />
             )}
-
         </div>
     );
 }

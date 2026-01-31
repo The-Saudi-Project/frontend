@@ -22,7 +22,7 @@ export default function AdminDashboard() {
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
 
-    /* ---------- LOADERS ---------- */
+    /* ================= LOADERS ================= */
 
     const loadServices = async () => {
         const res = await apiRequest("/services/admin");
@@ -32,7 +32,7 @@ export default function AdminDashboard() {
     const loadStats = async () => {
         const [servicesRes, bookingsRes] = await Promise.all([
             apiRequest("/services/admin"),
-            apiRequest("/bookings"), // ✅ admin sees all
+            apiRequest("/bookings"),
         ]);
 
         setStats({
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
             .finally(() => setLoading(false));
     }, []);
 
-    /* ---------- ACTIONS ---------- */
+    /* ================= ACTIONS ================= */
 
     const createService = async () => {
         if (!name || !price) return;
@@ -95,19 +95,19 @@ export default function AdminDashboard() {
         await Promise.all([loadServices(), loadStats()]);
     };
 
-    /* ---------- LOADING ---------- */
+    /* ================= LOADING ================= */
 
     if (loading) {
         return (
-            <div className="p-8 max-w-5xl mx-auto space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[1, 2, 3].map((i) => (
+            <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
                         <div
                             key={i}
-                            className="bg-white p-6 rounded-2xl border border-slate-100 animate-pulse"
+                            className="bg-white p-5 rounded-2xl border border-slate-100 animate-pulse"
                         >
-                            <div className="h-4 w-32 bg-slate-200 rounded mb-2" />
-                            <div className="h-8 w-20 bg-slate-200 rounded" />
+                            <div className="h-3 w-24 bg-slate-200 rounded mb-3" />
+                            <div className="h-7 w-16 bg-slate-200 rounded" />
                         </div>
                     ))}
                 </div>
@@ -115,42 +115,59 @@ export default function AdminDashboard() {
         );
     }
 
-    /* ---------- UI ---------- */
+    /* ================= UI ================= */
 
     return (
-        <div className="p-8 max-w-5xl mx-auto space-y-10">
+        <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10">
             <AdminNav />
-            {/* METRICS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="p-6">
-                    <p className="text-sm text-slate-500">Total Services</p>
-                    <p className="text-3xl font-bold mt-2">
+
+            {/* ================= METRICS ================= */}
+            <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-5">
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Services
+                    </p>
+                    <p className="text-2xl font-bold text-slate-900 mt-2">
                         {stats.services}
                     </p>
                 </Card>
 
-                <Card className="p-6">
-                    <p className="text-sm text-slate-500">Total Bookings</p>
-                    <p className="text-3xl font-bold mt-2">
+                <Card className="p-5">
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Bookings
+                    </p>
+                    <p className="text-2xl font-bold text-slate-900 mt-2">
                         {stats.bookings}
                     </p>
                 </Card>
 
-                <Card className="p-6">
-                    <p className="text-sm text-slate-500">Pending Requests</p>
-                    <p className="text-3xl font-bold text-amber-600 mt-2">
+                <Card className="p-5">
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Pending
+                    </p>
+                    <p className="text-2xl font-bold text-amber-600 mt-2">
                         {stats.pending}
                     </p>
                 </Card>
-            </div>
 
-            {/* CREATE SERVICE */}
-            <Card className="p-8">
-                <h3 className="text-xl font-bold mb-6">
+                {/* Placeholder for future KPI */}
+                <Card className="p-5 opacity-50">
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Revenue
+                    </p>
+                    <p className="text-2xl font-bold text-slate-400 mt-2">
+                        —
+                    </p>
+                </Card>
+            </section>
+
+            {/* ================= CREATE SERVICE ================= */}
+            <Card className="p-6 md:p-8">
+                <h3 className="text-lg font-semibold text-slate-900 mb-6">
                     Create New Service
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <Input
                         label="Service Name"
                         value={name}
@@ -175,76 +192,89 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                <Button className="mt-8" onClick={createService}>
-                    Publish Service
-                </Button>
+                <div className="pt-6">
+                    <Button onClick={createService}>
+                        Publish Service
+                    </Button>
+                </div>
             </Card>
-            {/* SERVICES – DESKTOP TABLE */}
-            <div className="hidden md:block overflow-hidden border border-slate-100 rounded-2xl bg-white">
-                <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                        <tr>
-                            <th className="px-6 py-4 font-semibold">Service Name</th>
-                            <th className="px-6 py-4 font-semibold">Price</th>
-                            <th className="px-6 py-4 font-semibold text-right">Actions</th>
-                        </tr>
-                    </thead>
 
-                    <tbody className="divide-y divide-slate-100">
-                        {services.map((s) => (
-                            <tr key={s._id}>
-                                <td className="px-6 py-4 font-medium">
-                                    {s.name}
-                                </td>
-
-                                <td className="px-6 py-4 font-mono">
-                                    {s.price} SAR
-                                </td>
-
-                                <td className="px-6 py-4">
-                                    <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="secondary"
-                                            className="h-9 px-4 text-sm"
-                                            onClick={() => startEdit(s)}
-                                        >
-                                            Edit
-                                        </Button>
-
-                                        <Button
-                                            variant="danger"
-                                            className="h-9 px-4 text-sm"
-                                            onClick={() => deleteService(s._id)}
-                                        >
-                                            Remove
-                                        </Button>
-                                    </div>
-                                </td>
+            {/* ================= SERVICES – DESKTOP ================= */}
+            <div className="hidden md:block">
+                <Card className="overflow-hidden">
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-400">
+                            <tr>
+                                <th className="px-6 py-4">Service</th>
+                                <th className="px-6 py-4">Price</th>
+                                <th className="px-6 py-4 text-right">
+                                    Actions
+                                </th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+
+                        <tbody className="divide-y divide-slate-100">
+                            {services.map((s) => (
+                                <tr
+                                    key={s._id}
+                                    className="hover:bg-slate-50/40 transition"
+                                >
+                                    <td className="px-6 py-4 font-medium text-slate-900">
+                                        {s.name}
+                                    </td>
+
+                                    <td className="px-6 py-4 text-sm font-mono">
+                                        {s.price} SAR
+                                    </td>
+
+                                    <td className="px-6 py-4">
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                variant="secondary"
+                                                className="text-xs px-4"
+                                                onClick={() =>
+                                                    startEdit(s)
+                                                }
+                                            >
+                                                Edit
+                                            </Button>
+
+                                            <Button
+                                                variant="danger"
+                                                className="text-xs px-4"
+                                                onClick={() =>
+                                                    deleteService(s._id)
+                                                }
+                                            >
+                                                Remove
+                                            </Button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </Card>
             </div>
 
-            {/* SERVICES – MOBILE CARDS */}
+            {/* ================= SERVICES – MOBILE ================= */}
             <div className="md:hidden space-y-4">
                 {services.map((s) => (
-                    <Card key={s._id} className="p-4">
-                        <div className="space-y-2">
+                    <Card key={s._id} className="p-4 space-y-3">
+                        <div>
                             <p className="font-semibold text-slate-900">
                                 {s.name}
                             </p>
-
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-slate-500 mt-1">
                                 {s.description || "No description"}
-                            </p>
-
-                            <p className="font-bold text-emerald-600">
-                                {s.price} SAR
                             </p>
                         </div>
 
-                        <div className="flex gap-2 mt-4">
+                        <p className="font-bold text-emerald-600">
+                            {s.price} SAR
+                        </p>
+
+                        <div className="flex gap-2 pt-2">
                             <Button
                                 variant="secondary"
                                 className="flex-1"
@@ -265,6 +295,13 @@ export default function AdminDashboard() {
                 ))}
             </div>
 
+            {/* ================= EDIT MODAL (COMING NEXT) ================= */}
+            {/* 
+                TODO:
+                - Convert edit flow to Modal (Lumina style)
+                - Add service image upload
+                - Add category & duration fields
+            */}
         </div>
     );
 }

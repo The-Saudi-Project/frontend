@@ -1,15 +1,26 @@
 import React from "react";
 
-/* ---------------- BUTTON ---------------- */
+/* =========================================================
+   BUTTON
+========================================================= */
 
 export const Button = ({
     variant = "primary",
     children,
     className = "",
+    disabled = false,
     ...props
 }) => {
-    const baseStyles =
-        "px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-95 flex items-center justify-center gap-2";
+    const baseStyles = `
+        inline-flex items-center justify-center gap-2
+        px-6 py-3
+        rounded-xl
+        text-sm font-semibold
+        transition-all duration-200
+        active:scale-[0.98]
+        disabled:opacity-50
+        disabled:cursor-not-allowed
+    `;
 
     const variants = {
         primary:
@@ -25,6 +36,7 @@ export const Button = ({
     return (
         <button
             className={`${baseStyles} ${variants[variant]} ${className}`}
+            disabled={disabled}
             {...props}
         >
             {children}
@@ -32,46 +44,94 @@ export const Button = ({
     );
 };
 
-/* ---------------- CARD ---------------- */
+/* =========================================================
+   CARD
+========================================================= */
 
 export const Card = ({ children, className = "" }) => (
     <div
-        className={`bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 ${className}`}
+        className={`
+            bg-white
+            border border-slate-100
+            rounded-2xl
+            shadow-sm
+            transition
+            hover:shadow-md
+            hover:border-slate-200
+            ${className}
+        `}
     >
         {children}
     </div>
 );
 
-/* ---------------- BADGE ---------------- */
+/* =========================================================
+   BADGE (Booking Status)
+========================================================= */
 
 export const Badge = ({ status }) => {
     const styles = {
-        Booked: "bg-blue-50 text-blue-600",
-        Assigned: "bg-amber-50 text-amber-600",
-        Completed: "bg-emerald-50 text-emerald-600",
-        Pending: "bg-slate-100 text-slate-600",
+        CREATED: "bg-slate-100 text-slate-600",
+        ASSIGNED: "bg-amber-50 text-amber-700 border border-amber-100",
+        IN_PROGRESS: "bg-blue-50 text-blue-700 border border-blue-100",
+        COMPLETED: "bg-emerald-50 text-emerald-700 border border-emerald-100",
+        CANCELLED: "bg-rose-50 text-rose-700 border border-rose-100",
     };
 
     return (
         <span
-            className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide uppercase ${styles[status] || styles.Pending
-                }`}
+            className={`
+                inline-flex items-center
+                px-3 py-1
+                rounded-full
+                text-xs font-semibold
+                uppercase tracking-wide
+                ${styles[status] || styles.CREATED}
+            `}
         >
-            {status}
+            {status?.replace("_", " ")}
         </span>
     );
 };
 
-/* ---------------- INPUT ---------------- */
+/* =========================================================
+   INPUT
+========================================================= */
 
-export const Input = ({ label, ...props }) => (
+export const Input = ({
+    label,
+    error,
+    className = "",
+    ...props
+}) => (
     <div className="flex flex-col gap-1.5 w-full">
-        <label className="text-sm font-medium text-slate-700 ml-1">
-            {label}
-        </label>
+        {label && (
+            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 ml-1">
+                {label}
+            </label>
+        )}
+
         <input
-            className="px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all bg-slate-50/50"
+            className={`
+                px-4 py-3
+                rounded-xl
+                border
+                bg-slate-50/50
+                text-sm
+                transition-all
+                focus:outline-none
+                focus:ring-2 focus:ring-emerald-500/20
+                focus:border-emerald-500
+                ${error ? "border-rose-500" : "border-slate-200"}
+                ${className}
+            `}
             {...props}
         />
+
+        {error && (
+            <p className="text-xs text-rose-600 ml-1">
+                {error}
+            </p>
+        )}
     </div>
 );
