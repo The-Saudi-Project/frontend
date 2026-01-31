@@ -35,6 +35,15 @@ export default function ProviderDashboard() {
             setActionLoading(null);
         }
     };
+    const startJob = async (id) => {
+        try {
+            setActionLoading(id);
+            await apiRequest(`/bookings/${id}/start`, "PATCH");
+            await loadJobs();
+        } finally {
+            setActionLoading(null);
+        }
+    };
 
     /* ================= LOADING STATE ================= */
     if (loading) {
@@ -104,9 +113,10 @@ export default function ProviderDashboard() {
                                 key={job._id}
                                 booking={job}
                                 loading={actionLoading === job._id}
-                                onAccept={acceptJob}
+                                onStart={startJob}
                                 onComplete={completeJob}
                             />
+
                         ))}
                     </div>
                 )}

@@ -69,14 +69,37 @@ export const Card = ({ children, className = "" }) => (
    BADGE (Booking Status)
 ========================================================= */
 
+/* ---------------- BADGE ---------------- */
+
 export const Badge = ({ status }) => {
-    const styles = {
-        CREATED: "bg-slate-100 text-slate-600",
-        ASSIGNED: "bg-amber-50 text-amber-700 border border-amber-100",
-        IN_PROGRESS: "bg-blue-50 text-blue-700 border border-blue-100",
-        COMPLETED: "bg-emerald-50 text-emerald-700 border border-emerald-100",
-        CANCELLED: "bg-rose-50 text-rose-700 border border-rose-100",
+    const config = {
+        CREATED: {
+            label: "Requested",
+            className: "bg-slate-100 text-slate-600",
+        },
+        ASSIGNED: {
+            label: "Assigned",
+            className:
+                "bg-amber-50 text-amber-700 border border-amber-100",
+        },
+        IN_PROGRESS: {
+            label: "In Progress",
+            className:
+                "bg-blue-50 text-blue-700 border border-blue-100",
+        },
+        COMPLETED: {
+            label: "Completed",
+            className:
+                "bg-emerald-50 text-emerald-700 border border-emerald-100",
+        },
+        CANCELLED: {
+            label: "Cancelled",
+            className:
+                "bg-rose-50 text-rose-700 border border-rose-100",
+        },
     };
+
+    const item = config[status] || config.CREATED;
 
     return (
         <span
@@ -86,10 +109,10 @@ export const Badge = ({ status }) => {
                 rounded-full
                 text-xs font-semibold
                 uppercase tracking-wide
-                ${styles[status] || styles.CREATED}
+                ${item.className}
             `}
         >
-            {status?.replace("_", " ")}
+            {item.label}
         </span>
     );
 };

@@ -3,13 +3,6 @@ import { apiRequest } from "../api/client";
 import { Button, Card, Badge } from "../components/Ui.jsx";
 import BookingModal from "../components/BookingModal";
 
-const statusLabel = {
-    CREATED: "Requested",
-    ASSIGNED: "Assigned",
-    IN_PROGRESS: "In Progress",
-    COMPLETED: "Completed",
-    CANCELLED: "Cancelled",
-};
 
 export default function CustomerDashboard() {
     const [services, setServices] = useState([]);
@@ -179,12 +172,7 @@ export default function CustomerDashboard() {
                                             </p>
                                         </div>
 
-                                        <Badge
-                                            status={
-                                                statusLabel[b.status] ||
-                                                b.status
-                                            }
-                                        />
+                                        <Badge status={b.status} />
                                     </Card>
                                 ))}
                             </div>

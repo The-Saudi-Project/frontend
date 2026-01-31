@@ -11,6 +11,7 @@ import ProviderDashboard from "./pages/ProviderDashboard";
 import { apiRequest } from "./api/client";
 import RoleSelection from "./pages/RoleSelection";
 import AdminBookings from "./pages/AdminBookings";
+import AdminProviders from "./pages/AdminProviders";
 
 
 export default function App() {
@@ -129,6 +130,7 @@ export default function App() {
               <Navigate to={`/${user.role}`} replace />
             }
           />
+          <Route path="/admin/providers" element={<AdminProviders />} />
 
           {/* FALLBACK */}
           <Route

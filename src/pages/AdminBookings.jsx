@@ -1,13 +1,21 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
-import { Card, Badge } from "../components/Ui.jsx";
+import { Card, Button, Badge } from "../components/Ui.jsx";
 import AdminNav from "../components/AdminNav";
+import Modal from "../components/Modal";
 
 export default function AdminBookings() {
     const [bookings, setBookings] = useState([]);
-    const [availableProviders, setAvailableProviders] = useState({});
     const [loading, setLoading] = useState(true);
-    const [assigning, setAssigning] = useState(null);
+
+    const [selectedBooking, setSelectedBooking] = useState(null);
+    const [showDetails, setShowDetails] = useState(false);
+
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [providers, setProviders] = useState([]);
+    const [selectedProvider, setSelectedProvider] = useState("");
+    const [assigning, setAssigning] = useState(false);
+    const [openActionsId, setOpenActionsId] = useState(null);
 
     /* ---------------- LOAD BOOKINGS ---------------- */
 
@@ -20,83 +28,95 @@ export default function AdminBookings() {
         loadBookings().finally(() => setLoading(false));
     }, []);
 
-    /* ---------------- LOAD PROVIDERS (PER BOOKING) ---------------- */
+    /* ---------------- VIEW DETAILS ---------------- */
 
-    const loadProviders = async (bookingId, scheduledAt) => {
-        if (availableProviders[bookingId]) return;
-
-        const res = await apiRequest(
-            `/users/providers/availability?scheduledAt=${scheduledAt}`
-        );
-
-        setAvailableProviders((prev) => ({
-            ...prev,
-            [bookingId]: res,
-        }));
+    const openDetails = (booking) => {
+        setSelectedBooking(booking);
+        setShowDetails(true);
     };
 
-    /* ---------------- ASSIGN PROVIDER ---------------- */
+    /* ---------------- ASSIGN / EDIT PROVIDER ---------------- */
 
-    const assignProvider = async (bookingId, providerId) => {
+    const openAssignProvider = async (booking) => {
+        setSelectedBooking(booking);
+        setSelectedProvider(booking.provider?._id || "");
+
+        const res = await apiRequest(
+            `/users/providers/availability?scheduledAt=${booking.scheduledAt}`
+        );
+        setProviders(res);
+
+        setShowAssignModal(true);
+    };
+
+    const assignProvider = async () => {
+        if (!selectedProvider) return;
+
         try {
-            setAssigning(bookingId);
-            await apiRequest(`/bookings/${bookingId}/assign`, "PATCH", {
-                providerId,
-            });
+            setAssigning(true);
+            await apiRequest(
+                `/bookings/${selectedBooking._id}/assign`,
+                "PATCH",
+                { providerId: selectedProvider }
+            );
+
+            setShowAssignModal(false);
             await loadBookings();
         } finally {
-            setAssigning(null);
+            setAssigning(false);
         }
     };
 
-    if (loading) {
-        return (
-            <div className="p-8 text-slate-500 text-sm">
-                Loading bookings…
-            </div>
+    /* ---------------- DELETE BOOKING ---------------- */
+
+    const deleteBooking = async (bookingId) => {
+        const ok = window.confirm(
+            "Are you sure you want to delete this booking?"
         );
+        if (!ok) return;
+
+        await apiRequest(`/bookings/${bookingId}`, "DELETE");
+        await loadBookings();
+    };
+
+    /* ---------------- STATUS RULES ---------------- */
+
+    const canEditProvider = (status) =>
+        status === "CREATED" || status === "ASSIGNED";
+
+    if (loading) {
+        return <div className="p-6 text-slate-500">Loading bookings…</div>;
     }
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
             <AdminNav />
 
-            <header className="space-y-1">
-                <h1 className="text-2xl font-semibold text-slate-900">
-                    All Bookings
-                </h1>
-                <p className="text-sm text-slate-500">
-                    Assign providers and monitor service progress
-                </p>
-            </header>
+            <h1 className="text-2xl font-bold">All Bookings</h1>
 
-            {/* ======================================================
-               DESKTOP TABLE
-            ====================================================== */}
+            {/* ================= DESKTOP TABLE ================= */}
             <div className="hidden md:block">
                 <Card className="overflow-hidden">
-                    <table className="w-full text-left border-collapse">
-                        <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-400">
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                             <tr>
                                 <th className="px-6 py-4">Service</th>
                                 <th className="px-6 py-4">Customer</th>
                                 <th className="px-6 py-4">Scheduled</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Provider</th>
+                                <th className="px-6 py-4">Actions</th>
                             </tr>
                         </thead>
 
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y">
                             {bookings.map((b) => (
-                                <tr
-                                    key={b._id}
-                                    className="hover:bg-slate-50/50 transition"
-                                >
-                                    <td className="px-6 py-4 font-medium text-slate-900">
+                                <tr key={b._id}>
+                                    <td className="px-6 py-4 font-medium">
                                         {b.service?.name}
                                     </td>
 
-                                    <td className="px-6 py-4 text-slate-700">
+                                    <td className="px-6 py-4">
                                         {b.customerName}
                                     </td>
 
@@ -109,54 +129,58 @@ export default function AdminBookings() {
                                     </td>
 
                                     <td className="px-6 py-4">
-                                        {["COMPLETED", "CANCELLED"].includes(b.status) ? (
-                                            <span className="text-sm text-slate-400">
-                                                {b.provider?.name || "—"}
-                                            </span>
-                                        ) : (
-                                            <select
-                                                className="
-                                                    w-full max-w-[220px]
-                                                    px-3 py-2
-                                                    text-sm
-                                                    rounded-xl
-                                                    border border-slate-200
-                                                    bg-white
-                                                    focus:outline-none
-                                                    focus:ring-2 focus:ring-emerald-500/20
-                                                "
-                                                value={b.provider?._id || ""}
-                                                disabled={assigning === b._id}
-                                                onFocus={() =>
-                                                    loadProviders(
-                                                        b._id,
-                                                        b.scheduledAt
-                                                    )
-                                                }
-                                                onChange={(e) =>
-                                                    assignProvider(
-                                                        b._id,
-                                                        e.target.value
-                                                    )
-                                                }
-                                            >
-                                                <option value="" disabled>
-                                                    Assign provider
-                                                </option>
+                                        {b.provider?.name || "—"}
+                                    </td>
 
-                                                {availableProviders[b._id]?.map(
-                                                    (p) => (
-                                                        <option
-                                                            key={p._id}
-                                                            value={p._id}
-                                                        >
-                                                            {p.name}
-                                                        </option>
-                                                    )
+                                    <td className="px-6 py-4 relative">
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() =>
+                                                setOpenActionsId(
+                                                    openActionsId === b._id ? null : b._id
+                                                )
+                                            }
+                                        >
+                                            Actions
+                                        </Button>
+
+                                        {openActionsId === b._id && (
+                                            <div className="absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-20">
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50"
+                                                    onClick={() => {
+                                                        openDetails(b);
+                                                        setOpenActionsId(null);
+                                                    }}
+                                                >
+                                                    View details
+                                                </button>
+
+                                                {canEditProvider(b.status) && (
+                                                    <button
+                                                        className="w-full text-left px-4 py-2 text-sm hover:bg-slate-50"
+                                                        onClick={() => {
+                                                            openAssignProvider(b);
+                                                            setOpenActionsId(null);
+                                                        }}
+                                                    >
+                                                        {b.provider ? "Edit Provider" : "Assign Provider"}
+                                                    </button>
                                                 )}
-                                            </select>
+
+                                                <button
+                                                    className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
+                                                    onClick={() => {
+                                                        setOpenActionsId(null);
+                                                        deleteBooking(b._id);
+                                                    }}
+                                                >
+                                                    Delete booking
+                                                </button>
+                                            </div>
                                         )}
                                     </td>
+
                                 </tr>
                             ))}
                         </tbody>
@@ -164,65 +188,120 @@ export default function AdminBookings() {
                 </Card>
             </div>
 
-            {/* ======================================================
-               MOBILE CARDS
-            ====================================================== */}
+            {/* ================= MOBILE CARDS ================= */}
             <div className="md:hidden space-y-4">
                 {bookings.map((b) => (
                     <Card key={b._id} className="p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-slate-900">
-                                {b.service?.name}
-                            </h3>
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="font-semibold text-slate-900">
+                                    {b.service?.name}
+                                </p>
+                                <p className="text-sm text-slate-500">
+                                    {b.customerName}
+                                </p>
+                            </div>
                             <Badge status={b.status} />
                         </div>
 
                         <div className="text-sm text-slate-500 space-y-1">
                             <p>
-                                <span className="font-medium">Customer:</span>{" "}
-                                {b.customerName}
+                                <strong>Scheduled:</strong>{" "}
+                                {new Date(b.scheduledAt).toLocaleString()}
                             </p>
                             <p>
-                                <span className="font-medium">Time:</span>{" "}
-                                {new Date(b.scheduledAt).toLocaleString()}
+                                <strong>Provider:</strong>{" "}
+                                {b.provider?.name || "—"}
                             </p>
                         </div>
 
-                        {!["COMPLETED", "CANCELLED"].includes(b.status) && (
-                            <select
-                                className="
-                                    w-full
-                                    px-3 py-2
-                                    text-sm
-                                    rounded-xl
-                                    border border-slate-200
-                                    bg-white
-                                    focus:outline-none
-                                    focus:ring-2 focus:ring-emerald-500/20
-                                "
-                                value={b.provider?._id || ""}
-                                disabled={assigning === b._id}
-                                onFocus={() =>
-                                    loadProviders(b._id, b.scheduledAt)
-                                }
-                                onChange={(e) =>
-                                    assignProvider(b._id, e.target.value)
-                                }
+                        <div className="flex flex-col gap-2 pt-2">
+                            <Button
+                                variant="ghost"
+                                onClick={() => openDetails(b)}
                             >
-                                <option value="" disabled>
-                                    Assign provider
-                                </option>
+                                View details
+                            </Button>
 
-                                {availableProviders[b._id]?.map((p) => (
-                                    <option key={p._id} value={p._id}>
-                                        {p.name}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
+                            {canEditProvider(b.status) && (
+                                <Button
+                                    variant="secondary"
+                                    onClick={() => openAssignProvider(b)}
+                                >
+                                    {b.provider
+                                        ? "Edit Provider"
+                                        : "Assign Provider"}
+                                </Button>
+                            )}
+
+                            <Button
+                                variant="danger"
+                                onClick={() => deleteBooking(b._id)}
+                            >
+                                Delete Booking
+                            </Button>
+                        </div>
                     </Card>
                 ))}
             </div>
+
+            {/* ================= VIEW DETAILS MODAL ================= */}
+            {showDetails && selectedBooking && (
+                <Modal
+                    title="Booking Details"
+                    onClose={() => setShowDetails(false)}
+                >
+                    <div className="space-y-2 text-sm">
+                        <p><strong>Service:</strong> {selectedBooking.service?.name}</p>
+                        <p><strong>Customer:</strong> {selectedBooking.customerName}</p>
+                        <p><strong>Phone:</strong> {selectedBooking.customerPhone}</p>
+                        <p><strong>Address:</strong> {selectedBooking.customerAddress}</p>
+                        <p><strong>Notes:</strong> {selectedBooking.notes || "—"}</p>
+                        <p><strong>Scheduled:</strong> {new Date(selectedBooking.scheduledAt).toLocaleString()}</p>
+                        <p><strong>Status:</strong> {selectedBooking.status}</p>
+                    </div>
+                </Modal>
+            )}
+
+            {/* ================= ASSIGN PROVIDER MODAL ================= */}
+            {showAssignModal && selectedBooking && (
+                <Modal
+                    title="Assign Provider"
+                    onClose={() => setShowAssignModal(false)}
+                >
+                    <div className="space-y-4">
+                        <select
+                            className="w-full border rounded-lg px-3 py-2"
+                            value={selectedProvider}
+                            onChange={(e) =>
+                                setSelectedProvider(e.target.value)
+                            }
+                        >
+                            <option value="">Select provider</option>
+                            {providers.map((p) => (
+                                <option key={p._id} value={p._id}>
+                                    {p.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        <div className="flex justify-end gap-2">
+                            <Button
+                                variant="secondary"
+                                onClick={() => setShowAssignModal(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                onClick={assignProvider}
+                                disabled={assigning}
+                            >
+                                {assigning ? "Assigning…" : "Confirm"}
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }
