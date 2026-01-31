@@ -74,7 +74,7 @@ export default function Signup({ onSignup }) {
                 email,
                 password,
                 role,
-                services: role === "provider" ? selectedServices : [],
+                skills: role === "provider" ? selectedServices : [],
             });
         } catch (e) {
             setError(e.message || "Signup failed");
@@ -82,6 +82,34 @@ export default function Signup({ onSignup }) {
             setLoading(false);
         }
     };
+    /* ---------- PROVIDER SKILLS ---------- */
+    const PROVIDER_SKILLS = [
+        {
+            id: "driving",
+            label: "Driving",
+            description: "Car driver, personal driver, delivery driving",
+        },
+        {
+            id: "cleaning",
+            label: "Cleaning",
+            description: "Home cleaning, office cleaning",
+        },
+        {
+            id: "electrician",
+            label: "Electrician",
+            description: "Electrical repairs & installations",
+        },
+        {
+            id: "plumber",
+            label: "Plumber",
+            description: "Pipes, fittings, water issues",
+        },
+        {
+            id: "ac",
+            label: "AC Technician",
+            description: "AC service & repair",
+        },
+    ];
 
     return (
         <div className="min-h-screen bg-[#FDFCF9] flex flex-col lg:flex-row">
@@ -192,47 +220,48 @@ export default function Signup({ onSignup }) {
                                 }
                             />
                         </div>
-
-                        {/* PROVIDER SERVICES */}
+                        {/* PROVIDER SKILLS */}
                         {role === "provider" && (
-                            <div className="border-t pt-6 space-y-4">
-                                <p className="text-sm font-semibold text-slate-700">
-                                    Services you provide
+                            <div className="border-t pt-5 space-y-4">
+                                <p className="text-sm font-semibold">
+                                    Skills you have
                                 </p>
 
-                                <div className="grid grid-cols-2 gap-2">
-                                    {services.map((s) => (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {PROVIDER_SKILLS.map((skill) => (
                                         <label
-                                            key={s._id}
-                                            className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-sm transition
-                                                ${selectedServices.includes(s._id)
-                                                    ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                                            key={skill.id}
+                                            className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition
+                        ${selectedServices.includes(skill.id)
+                                                    ? "border-emerald-500 bg-emerald-50"
                                                     : "border-slate-200 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input
                                                 type="checkbox"
-                                                className="accent-emerald-600"
-                                                checked={selectedServices.includes(s._id)}
-                                                onChange={() => toggleService(s._id)}
+                                                className="mt-1 accent-emerald-600"
+                                                checked={selectedServices.includes(skill.id)}
+                                                onChange={() => toggleService(skill.id)}
                                             />
-                                            {s.name}
+
+                                            <div>
+                                                <p className="text-sm font-medium">
+                                                    {skill.label}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                    {skill.description}
+                                                </p>
+                                            </div>
                                         </label>
                                     ))}
                                 </div>
 
-                                {/* FUTURE PLACEHOLDER */}
-                                {/*
-                                <div className="text-xs text-slate-400">
-                                    Verification documents • Availability • Pricing
-                                </div>
-                                */}
-
-                                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3">
+                                <div className="text-xs bg-amber-50 border border-amber-100 text-amber-700 rounded-lg p-3">
                                     Providers are reviewed before receiving job requests.
-                                </p>
+                                </div>
                             </div>
                         )}
+
 
                         {/* CTA */}
                         <Button
