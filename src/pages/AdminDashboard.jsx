@@ -198,6 +198,51 @@ export default function AdminDashboard() {
                     </Button>
                 </div>
             </Card>
+            {editingService && (
+                <Card className="p-6 md:p-8 border-emerald-200">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-6">
+                        Edit Service
+                    </h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <Input
+                            label="Service Name"
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                        />
+
+                        <Input
+                            label="Base Price (SAR)"
+                            type="number"
+                            value={editPrice}
+                            onChange={(e) => setEditPrice(e.target.value)}
+                        />
+
+                        <div className="md:col-span-2">
+                            <Input
+                                label="Description"
+                                value={editDescription}
+                                onChange={(e) =>
+                                    setEditDescription(e.target.value)
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 mt-6">
+                        <Button
+                            variant="ghost"
+                            onClick={() => setEditingService(null)}
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button onClick={saveEdit}>
+                            Save Changes
+                        </Button>
+                    </div>
+                </Card>
+            )}
 
             {/* ================= SERVICES – DESKTOP ================= */}
             <div className="hidden md:block">
