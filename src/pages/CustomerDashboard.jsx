@@ -12,14 +12,25 @@ export default function CustomerDashboard() {
     const [activeTab, setActiveTab] = useState("browse");
 
     const loadData = async () => {
-        const [servicesRes, bookingsRes] = await Promise.all([
-            apiRequest("/services/public"),
-            apiRequest("/bookings/customer"),
-        ]);
+        try {
+            const servicesRes = await apiRequest("/services/public");
+            setServices(servicesRes);
 
-        setServices(servicesRes);
-        setBookings(bookingsRes);
+            // Try loading bookings, but don't crash if forbidden
+            try {
+                const bookingsRes = await apiRequest("/bookings/customer");
+                setBookings(bookingsRes);
+            } catch (err) {
+                // Forbidden or not customer → treat as no bookings
+                setBookings([]);
+            }
+        } catch (err) {
+            console.error("Failed to load dashboard data:", err);
+            setServices([]);
+            setBookings([]);
+        }
     };
+
 
     useEffect(() => {
         loadData().finally(() => setLoading(false));
@@ -103,7 +114,7 @@ export default function CustomerDashboard() {
                 {/* ================= SERVICES ================= */}
                 {activeTab === "browse" && (
                     <>
-                        {services.length === 0 ? (
+                        {!services || services.length === 0 ? (
                             <Card className="p-10 text-center text-slate-500">
                                 No services available right now
                             </Card>
@@ -152,7 +163,7 @@ export default function CustomerDashboard() {
                 {/* ================= BOOKINGS ================= */}
                 {activeTab === "bookings" && (
                     <>
-                        {bookings.length === 0 ? (
+                        {!bookings || bookings.length === 0 ? (
                             <Card className="p-10 text-center text-slate-500">
                                 You haven’t made any bookings yet
                             </Card>

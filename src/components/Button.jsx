@@ -3,6 +3,7 @@ export default function Button({
     variant = "primary",
     className = "",
     disabled = false,
+    type = "button", // ✅ DEFAULT TO BUTTON
     ...props
 }) {
     const base =
@@ -11,19 +12,17 @@ export default function Button({
     const variants = {
         primary:
             "bg-emerald-600 text-white hover:bg-emerald-700 active:scale-[0.98] focus:ring-emerald-500/30",
-
         secondary:
             "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 active:scale-[0.98] focus:ring-slate-300",
-
         ghost:
             "bg-transparent text-slate-600 hover:bg-slate-100 focus:ring-slate-200",
-
         danger:
             "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500/30",
     };
 
     return (
         <button
+            type={type} // ✅ CRITICAL FIX
             className={`${base} ${variants[variant]} ${className}`}
             disabled={disabled}
             {...props}

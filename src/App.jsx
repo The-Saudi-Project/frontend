@@ -101,6 +101,7 @@ export default function App() {
             }
           />
 
+
           {/* PROVIDER */}
           <Route
             path="/provider"

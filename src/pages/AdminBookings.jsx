@@ -20,12 +20,21 @@ export default function AdminBookings() {
     /* ---------------- LOAD BOOKINGS ---------------- */
 
     const loadBookings = async () => {
-        const res = await apiRequest("/bookings");
-        setBookings(res);
+        setLoading(true);
+
+        try {
+            const res = await apiRequest("/bookings"); // ADMIN GET ALL
+            setBookings(res || []);
+        } catch (err) {
+            console.error("Failed to load bookings:", err);
+            setBookings([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
-        loadBookings().finally(() => setLoading(false));
+        loadBookings();
     }, []);
 
     /* ---------------- VIEW DETAILS ---------------- */
@@ -50,22 +59,31 @@ export default function AdminBookings() {
     };
 
     const assignProvider = async () => {
-        if (!selectedProvider) return;
+        if (!selectedProvider || !selectedBooking) return;
 
         try {
             setAssigning(true);
-            await apiRequest(
-                `/bookings/${selectedBooking._id}/assign`,
-                "PATCH",
-                { providerId: selectedProvider }
-            );
+
+            await apiRequest(`/bookings/${selectedBooking._id}/assign`, {
+                method: "PATCH",
+                body: { providerId: selectedProvider },
+            });
+
 
             setShowAssignModal(false);
-            await loadBookings();
+            setSelectedBooking(null);
+            setSelectedProvider("");
+
+            await loadBookings(); // refresh list
+        } catch (err) {
+            console.error("Assign provider failed:", err);
+            alert(err.message || "Failed to assign provider");
         } finally {
             setAssigning(false);
         }
     };
+
+
 
     /* ---------------- DELETE BOOKING ---------------- */
 

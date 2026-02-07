@@ -22,7 +22,6 @@ export default function BookingModal({ service, onClose, onBooked }) {
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState("");
-
     const submit = async () => {
         setError("");
 
@@ -36,14 +35,30 @@ export default function BookingModal({ service, onClose, onBooked }) {
         try {
             setLoading(true);
 
-            await apiRequest("/bookings", "POST", {
-                serviceId: service._id,
-                scheduledAt,
-                customerName,
-                customerPhone,
-                customerAddress,
-                notes,
+            await fetch(
+                `${import.meta.env.VITE_API_URL}/bookings`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${sessionStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({
+                        serviceId: service._id,
+                        scheduledAt,
+                        customerName,
+                        customerPhone,
+                        customerAddress,
+                        notes,
+                    }),
+                }
+            ).then(async (res) => {
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message);
+                }
             });
+
 
             setSuccess(true);
             onBooked?.();
@@ -52,13 +67,29 @@ export default function BookingModal({ service, onClose, onBooked }) {
                 onClose();
             }, 1400);
         } catch (e) {
-            setError(e.message || "Failed to create booking");
-        } finally {
+            // Normalize backend errors
+            let message = "Failed to create booking";
+
+            if (e.message?.includes("Forbidden")) {
+                message = "Only customer accounts can book services. Please log in as a customer.";
+                // Close modal to avoid UI crash
+                setTimeout(() => {
+                    onClose();
+                }, 1200);
+            } else if (e.message) {
+                message = e.message;
+            }
+
+            setError(message);
+        }
+        finally {
             setLoading(false);
         }
     };
+    if (!service) return null;
 
     return (
+
         <Modal
             isOpen
             onClose={onClose}

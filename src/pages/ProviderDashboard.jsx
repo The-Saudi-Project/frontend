@@ -9,7 +9,7 @@ export default function ProviderDashboard() {
 
     const loadJobs = async () => {
         const res = await apiRequest("/bookings/provider");
-        setJobs(res);
+        setJobs(res || []);
     };
 
     useEffect(() => {
@@ -19,7 +19,21 @@ export default function ProviderDashboard() {
     const acceptJob = async (id) => {
         try {
             setActionLoading(id);
-            await apiRequest(`/bookings/${id}/accept`, "PATCH");
+            await apiRequest(`/bookings/${id}/accept`, {
+                method: "PATCH",
+            });
+            await loadJobs();
+        } finally {
+            setActionLoading(null);
+        }
+    };
+
+    const startJob = async (id) => {
+        try {
+            setActionLoading(id);
+            await apiRequest(`/bookings/${id}/start`, {
+                method: "PATCH",
+            });
             await loadJobs();
         } finally {
             setActionLoading(null);
@@ -29,16 +43,9 @@ export default function ProviderDashboard() {
     const completeJob = async (id) => {
         try {
             setActionLoading(id);
-            await apiRequest(`/bookings/${id}/complete`, "PATCH");
-            await loadJobs();
-        } finally {
-            setActionLoading(null);
-        }
-    };
-    const startJob = async (id) => {
-        try {
-            setActionLoading(id);
-            await apiRequest(`/bookings/${id}/start`, "PATCH");
+            await apiRequest(`/bookings/${id}/complete`, {
+                method: "PATCH",
+            });
             await loadJobs();
         } finally {
             setActionLoading(null);
@@ -76,7 +83,6 @@ export default function ProviderDashboard() {
         <div className="min-h-screen bg-slate-50/50 px-4 py-10 pb-24">
             <div className="max-w-4xl mx-auto space-y-10">
 
-                {/* ================= HEADER ================= */}
                 <header className="space-y-2">
                     <h1 className="text-2xl md:text-3xl font-semibold text-slate-900">
                         Active Jobs
@@ -86,17 +92,6 @@ export default function ProviderDashboard() {
                     </p>
                 </header>
 
-                {/* ================= SUMMARY (PLACEHOLDER) ================= */}
-                {/*
-                <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <SummaryCard label="Today’s Jobs" value="3" />
-                    <SummaryCard label="Completed" value="18" />
-                    <SummaryCard label="Earnings" value="SAR 1,240" />
-                    <SummaryCard label="Rating" value="4.9 ★" />
-                </section>
-                */}
-
-                {/* ================= JOB LIST ================= */}
                 {jobs.length === 0 ? (
                     <div className="bg-white border border-slate-100 rounded-2xl p-10 text-center">
                         <p className="text-slate-500 text-sm">
@@ -113,23 +108,13 @@ export default function ProviderDashboard() {
                                 key={job._id}
                                 booking={job}
                                 loading={actionLoading === job._id}
+                                onAccept={acceptJob}
                                 onStart={startJob}
                                 onComplete={completeJob}
                             />
-
                         ))}
                     </div>
                 )}
-
-                {/* ================= FUTURE PLACEHOLDERS ================= */}
-                {/*
-                <section className="bg-white border border-dashed border-slate-200 rounded-2xl p-8 text-center">
-                    <p className="text-slate-400 text-sm italic">
-                        Upcoming features: route map, availability toggle,
-                        earnings breakdown, reviews.
-                    </p>
-                </section>
-                */}
             </div>
         </div>
     );
