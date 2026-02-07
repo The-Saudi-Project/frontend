@@ -12,6 +12,8 @@ export default function Signup({ onSignup }) {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [role, setRole] = useState("customer");
+    const [success, setSuccess] = useState("");
+
 
     /* ---------- PROVIDER SERVICES ---------- */
     const [services, setServices] = useState([]);
@@ -69,19 +71,34 @@ export default function Signup({ onSignup }) {
 
         try {
             setLoading(true);
+            setError("");
+
+            if (typeof onSignup !== "function") {
+                throw new Error("Signup handler not connected");
+            }
+
             await onSignup({
                 name,
                 email,
                 password,
                 role,
-                skills: role === "provider" ? selectedServices : [],
+                services: role === "provider" ? selectedServices : [],
             });
+
+            // ✅ SUCCESS FEEDBACK
+            setSuccess("Account created successfully. Redirecting to login…");
+
+            // ✅ REDIRECT AFTER SHORT DELAY
+            setTimeout(() => {
+                navigate(`/login/${role}`);
+            }, 1500);
+
         } catch (e) {
             setError(e.message || "Signup failed");
         } finally {
             setLoading(false);
         }
-    };
+    }
     /* ---------- PROVIDER SKILLS ---------- */
     const PROVIDER_SKILLS = [
         {
@@ -149,7 +166,12 @@ export default function Signup({ onSignup }) {
                             Get started in less than a minute
                         </p>
                     </div>
-
+                    {/* SUCCESS MESSAGE */}
+                    {success && (
+                        <div className="mb-4 text-sm text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-4 py-2">
+                            {success}
+                        </div>
+                    )}
                     {/* ERROR */}
                     {error && (
                         <div className="mb-4 text-sm text-rose-600 bg-rose-50 border border-rose-100 rounded-lg px-4 py-2">

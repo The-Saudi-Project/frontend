@@ -5,6 +5,7 @@ export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  /* ---------- RESTORE SESSION ---------- */
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) {
@@ -20,22 +21,30 @@ export const useAuth = () => {
       .finally(() => setLoading(false));
   }, []);
 
+  /* ---------- LOGIN ---------- */
   const login = async (email, password, expectedRole) => {
-    const res = await apiRequest("/auth/login", "POST", {
-      email,
-      password,
-      expectedRole, // ✅ send intent
+    const res = await apiRequest("/auth/login", {
+      method: "POST",
+      body: { email, password, expectedRole },
     });
 
     sessionStorage.setItem("token", res.token);
-    const me = await apiRequest("/auth/me");
-    setUser(me);
+    setUser(res.user);
   };
 
+  /* ---------- SIGNUP (THIS WAS MISSING) ---------- */
+  const signup = async (data) => {
+    return apiRequest("/auth/register", {
+      method: "POST",
+      body: data,
+    });
+  };
+
+  /* ---------- LOGOUT ---------- */
   const logout = () => {
     sessionStorage.removeItem("token");
     setUser(null);
   };
 
-  return { user, loading, login, logout };
+  return { user, loading, login, signup, logout };
 };

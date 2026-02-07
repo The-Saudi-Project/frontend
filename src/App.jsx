@@ -15,7 +15,7 @@ import AdminProviders from "./pages/AdminProviders";
 
 
 export default function App() {
-  const { user, loading, login, logout } = useAuth();
+  const { user, loading, login, signup, logout } = useAuth();
   const [error, setError] = useState("");
 
 
@@ -63,7 +63,7 @@ export default function App() {
           }
         />
 
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/signup" element={<Signup onSignup={signup} />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
