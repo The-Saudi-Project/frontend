@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "../api/client";
 import { Card, Button, Input } from "../components/Ui.jsx";
 import AdminNav from "../components/AdminNav";
+import Modal from "../components/Modal";
 
 export default function AdminDashboard() {
     const [services, setServices] = useState([]);
@@ -13,16 +14,18 @@ export default function AdminDashboard() {
         pending: 0,
     });
 
-    const [editingService, setEditingService] = useState(null);
+    /* ---------- EDIT MODAL STATE ---------- */
+    const [editService, setEditService] = useState(null);
     const [editName, setEditName] = useState("");
     const [editPrice, setEditPrice] = useState("");
     const [editDescription, setEditDescription] = useState("");
 
+    /* ---------- CREATE STATE ---------- */
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
 
-    /* ================= LOADERS ================= */
+    /* ---------- LOADERS ---------- */
 
     const loadServices = async () => {
         const res = await apiRequest("/services/admin");
@@ -49,7 +52,7 @@ export default function AdminDashboard() {
             .finally(() => setLoading(false));
     }, []);
 
-    /* ================= ACTIONS ================= */
+    /* ---------- ACTIONS ---------- */
 
     const createService = async () => {
         if (!name || !price) return;
@@ -70,15 +73,15 @@ export default function AdminDashboard() {
         await Promise.all([loadServices(), loadStats()]);
     };
 
-    const startEdit = (service) => {
-        setEditingService(service._id);
+    const openEditModal = (service) => {
+        setEditService(service);
         setEditName(service.name);
         setEditPrice(service.price);
         setEditDescription(service.description || "");
     };
 
     const saveEdit = async () => {
-        await apiRequest(`/services/${editingService}`, {
+        await apiRequest(`/services/${editService._id}`, {
             method: "PATCH",
             body: {
                 name: editName,
@@ -87,161 +90,103 @@ export default function AdminDashboard() {
             },
         });
 
-        setEditingService(null);
+        setEditService(null);
         await Promise.all([loadServices(), loadStats()]);
     };
 
     const deleteService = async (id) => {
-        const ok = window.confirm(
-            "Are you sure you want to permanently delete this service?"
-        );
-        if (!ok) return;
+        if (!window.confirm("Delete this service permanently?")) return;
 
-        await apiRequest(`/services/${id}`, {
-            method: "DELETE",
-        });
-
+        await apiRequest(`/services/${id}`, { method: "DELETE" });
         await Promise.all([loadServices(), loadStats()]);
     };
 
-    /* ================= LOADING ================= */
+    /* ---------- LOADING ---------- */
 
     if (loading) {
-        return <div className="p-6 text-slate-500">Loading dashboard…</div>;
+        return <div className="p-6 text-slate-500">Loading…</div>;
     }
-
-    /* ================= UI ================= */
 
     return (
         <div className="p-4 md:p-10 max-w-7xl mx-auto space-y-10">
             <AdminNav />
 
-            {/* METRICS */}
+            {/* ---------- METRICS ---------- */}
             <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card className="p-5">
-                    <p className="text-xs text-slate-400">Services</p>
+                    <p className="text-xs font-bold uppercase text-slate-400">
+                        Services
+                    </p>
                     <p className="text-2xl font-bold">{stats.services}</p>
                 </Card>
 
                 <Card className="p-5">
-                    <p className="text-xs text-slate-400">Bookings</p>
+                    <p className="text-xs font-bold uppercase text-slate-400">
+                        Bookings
+                    </p>
                     <p className="text-2xl font-bold">{stats.bookings}</p>
                 </Card>
 
                 <Card className="p-5">
-                    <p className="text-xs text-slate-400">Pending</p>
+                    <p className="text-xs font-bold uppercase text-slate-400">
+                        Pending
+                    </p>
                     <p className="text-2xl font-bold text-amber-600">
                         {stats.pending}
                     </p>
                 </Card>
             </section>
 
-            {/* CREATE */}
+            {/* ---------- CREATE SERVICE ---------- */}
             <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">
-                    Create New Service
-                </h3>
+                <h3 className="font-semibold mb-4">Create Service</h3>
 
                 <div className="grid md:grid-cols-2 gap-4">
+                    <Input label="Service Name" value={name} onChange={e => setName(e.target.value)} />
+                    <Input label="Price (SAR)" type="number" value={price} onChange={e => setPrice(e.target.value)} />
                     <Input
-                        label="Service Name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                    />
-                    <Input
-                        label="Price (SAR)"
-                        type="number"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                    />
-                    <Input
+                        className="md:col-span-2"
                         label="Description"
                         value={description}
-                        onChange={(e) => setDescription(e.target.value)}
+                        onChange={e => setDescription(e.target.value)}
                     />
                 </div>
 
-                <div className="mt-4">
-                    <Button onClick={createService}>
-                        Publish Service
-                    </Button>
+                <div className="pt-4">
+                    <Button onClick={createService}>Publish</Button>
                 </div>
             </Card>
 
-            {/* EDIT */}
-            {editingService && (
-                <Card className="p-6 border-emerald-200">
-                    <h3 className="text-lg font-semibold mb-4">
-                        Edit Service
-                    </h3>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <Input
-                            label="Service Name"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                        />
-                        <Input
-                            label="Price (SAR)"
-                            type="number"
-                            value={editPrice}
-                            onChange={(e) => setEditPrice(e.target.value)}
-                        />
-                        <Input
-                            label="Description"
-                            value={editDescription}
-                            onChange={(e) =>
-                                setEditDescription(e.target.value)
-                            }
-                        />
-                    </div>
-
-                    <div className="flex justify-end gap-3 mt-4">
-                        <Button
-                            variant="ghost"
-                            onClick={() => setEditingService(null)}
-                        >
-                            Cancel
-                        </Button>
-                        <Button onClick={saveEdit}>
-                            Save Changes
-                        </Button>
-                    </div>
-                </Card>
-            )}
-
-            {/* LIST */}
+            {/* ---------- SERVICES TABLE ---------- */}
             <Card className="overflow-hidden">
                 <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-xs text-slate-500">
+                    <thead className="bg-slate-50 text-xs uppercase text-slate-400">
                         <tr>
                             <th className="px-6 py-4">Service</th>
                             <th className="px-6 py-4">Price</th>
-                            <th className="px-6 py-4 text-right">
-                                Actions
-                            </th>
+                            <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
+
                     <tbody className="divide-y">
                         {services.map((s) => (
                             <tr key={s._id}>
-                                <td className="px-6 py-4">{s.name}</td>
-                                <td className="px-6 py-4">
-                                    {s.price} SAR
+                                <td className="px-6 py-4 font-medium">
+                                    {s.name}
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-6 py-4">{s.price} SAR</td>
+                                <td className="px-6 py-4 text-right space-x-2">
                                     <Button
                                         variant="secondary"
-                                        className="mr-2"
-                                        onClick={() => startEdit(s)}
+                                        className="text-xs"
+                                        onClick={() => openEditModal(s)}
                                     >
                                         Edit
                                     </Button>
                                     <Button
                                         variant="danger"
-                                        onClick={() =>
-                                            deleteService(s._id)
-                                        }
+                                        className="text-xs"
+                                        onClick={() => deleteService(s._id)}
                                     >
                                         Remove
                                     </Button>
@@ -251,6 +196,45 @@ export default function AdminDashboard() {
                     </tbody>
                 </table>
             </Card>
+
+            {/* ---------- EDIT MODAL ---------- */}
+            {editService && (
+                <Modal
+                    title="Edit Service"
+                    onClose={() => setEditService(null)}
+                >
+                    <div className="space-y-4">
+                        <Input
+                            label="Service Name"
+                            value={editName}
+                            onChange={e => setEditName(e.target.value)}
+                        />
+                        <Input
+                            label="Price (SAR)"
+                            type="number"
+                            value={editPrice}
+                            onChange={e => setEditPrice(e.target.value)}
+                        />
+                        <Input
+                            label="Description"
+                            value={editDescription}
+                            onChange={e => setEditDescription(e.target.value)}
+                        />
+
+                        <div className="flex justify-end gap-3 pt-4">
+                            <Button
+                                variant="ghost"
+                                onClick={() => setEditService(null)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button onClick={saveEdit}>
+                                Save Changes
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
         </div>
     );
 }
