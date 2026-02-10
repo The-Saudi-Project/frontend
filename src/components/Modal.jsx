@@ -4,14 +4,14 @@ export default function Modal({ title, children, onClose, footer }) {
             {/* PANEL */}
             <div
                 className="
-                    w-full sm:max-w-lg
-                    bg-white
-                    rounded-t-2xl sm:rounded-2xl
-                    shadow-2xl
-                    flex flex-col
-                    max-h-[90vh]
-                    animate-in slide-in-from-bottom sm:fade-in
-                "
+                        w-full sm:max-w-lg
+                        bg-white
+                        rounded-t-2xl sm:rounded-2xl
+                        shadow-2xl
+                        flex flex-col
+                        max-h-[90vh]
+                        animate-in slide-in-from-bottom sm:fade-in
+                    "
             >
                 {/* HEADER */}
                 <div className="flex items-center justify-between px-5 py-4 border-b bg-white sticky top-0 z-10">
@@ -23,14 +23,14 @@ export default function Modal({ title, children, onClose, footer }) {
                         onClick={onClose}
                         aria-label="Close modal"
                         className="
-                            w-9 h-9
-                            flex items-center justify-center
-                            rounded-full
-                            text-slate-400
-                            hover:text-slate-700
-                            hover:bg-slate-100
-                            transition
-                        "
+                                w-9 h-9
+                                flex items-center justify-center
+                                rounded-full
+                                text-slate-400
+                                hover:text-slate-700
+                                hover:bg-slate-100
+                                transition
+                            "
                     >
                         ✕
                     </button>

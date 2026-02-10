@@ -15,7 +15,9 @@ export default function AdminBookings() {
     const [providers, setProviders] = useState([]);
     const [selectedProvider, setSelectedProvider] = useState("");
     const [assigning, setAssigning] = useState(false);
-    const [openActionsId, setOpenActionsId] = useState(null);
+
+    // ✅ NEW: payment proof modal
+    const [showProofModal, setShowProofModal] = useState(false);
 
     /* ---------------- LOAD BOOKINGS ---------------- */
 
@@ -93,14 +95,6 @@ export default function AdminBookings() {
         await loadBookings();
     };
 
-    /* ---------------- DELETE ---------------- */
-
-    const deleteBooking = async (id) => {
-        if (!window.confirm("Delete this booking?")) return;
-        await apiRequest(`/bookings/${id}`, { method: "DELETE" });
-        await loadBookings();
-    };
-
     /* ---------------- STATUS RULES ---------------- */
 
     const canAssignProvider = (status) => status === "CONFIRMED";
@@ -164,7 +158,7 @@ export default function AdminBookings() {
                     title="Booking Details"
                     onClose={() => setShowDetails(false)}
                 >
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-3 text-sm">
                         <p><strong>Service:</strong> {selectedBooking.service?.name}</p>
                         <p><strong>Customer:</strong> {selectedBooking.customerName}</p>
                         <p><strong>Phone:</strong> {selectedBooking.customerPhone}</p>
@@ -172,27 +166,23 @@ export default function AdminBookings() {
                         <p><strong>Scheduled:</strong> {new Date(selectedBooking.scheduledAt).toLocaleString()}</p>
                         <p><strong>Status:</strong> {selectedBooking.status}</p>
 
-                        {/* PAYMENT PROOF */}
+                        {/* ✅ VIEW PAYMENT PROOF */}
                         {selectedBooking.paymentProof && (
-                            <a
-                                href={`${import.meta.env.VITE_API_URL.replace("/api", "")}/uploads/payments/${selectedBooking.paymentProof}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-emerald-600 underline text-sm block mt-2"
+                            <Button
+                                variant="ghost"
+                                className="mt-2"
+                                onClick={() => setShowProofModal(true)}
                             >
                                 View payment proof
-                            </a>
+                            </Button>
                         )}
 
-
-                        {/* CONFIRM PAYMENT */}
                         {selectedBooking.status === "PAYMENT_UPLOADED" && (
                             <Button className="mt-4" onClick={confirmPayment}>
                                 Confirm Payment
                             </Button>
                         )}
 
-                        {/* ASSIGN PROVIDER */}
                         {canAssignProvider(selectedBooking.status) && (
                             <Button
                                 variant="secondary"
@@ -206,7 +196,26 @@ export default function AdminBookings() {
                 </Modal>
             )}
 
-            {/* ================= ASSIGN MODAL ================= */}
+            {/* ================= PAYMENT PROOF MODAL ================= */}
+            {showProofModal && selectedBooking && (
+                <Modal
+                    title="Payment Proof"
+                    onClose={() => setShowProofModal(false)}
+                >
+                    <div className="flex justify-center">
+                        <img
+                            src={`${import.meta.env.VITE_API_URL.replace(
+                                "/api",
+                                ""
+                            )}/uploads/payments/${selectedBooking.paymentProof}`}
+                            alt="Payment proof"
+                            className="max-h-[70vh] rounded-xl border"
+                        />
+                    </div>
+                </Modal>
+            )}
+
+            {/* ================= ASSIGN PROVIDER MODAL ================= */}
             {showAssignModal && selectedBooking && (
                 <Modal
                     title="Assign Provider"
