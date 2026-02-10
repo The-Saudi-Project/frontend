@@ -12,13 +12,18 @@ export const useAuth = () => {
       return;
     }
 
-    apiRequest("/auth/me")
-      .then(setUser)
-      .catch(() => {
-        sessionStorage.clear();
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
+    // ⚠️ We DO NOT call /auth/me (it does not exist)
+    // User is already known from login
+    try {
+      const storedUser = sessionStorage.getItem("user");
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
+    } catch {
+      sessionStorage.clear();
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const login = async (email, password, expectedRole) => {
@@ -28,6 +33,7 @@ export const useAuth = () => {
     });
 
     sessionStorage.setItem("token", res.token);
+    sessionStorage.setItem("user", JSON.stringify(res.user));
     setUser(res.user);
   };
 
