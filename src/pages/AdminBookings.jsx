@@ -18,7 +18,8 @@ export default function AdminBookings() {
 
     const [showProofModal, setShowProofModal] = useState(false);
 
-    const [tab, setTab] = useState("active"); // active | completed
+    // 🔑 FIX: include cancelled tab
+    const [tab, setTab] = useState("active"); // active | completed | cancelled
 
     /* ---------------- LOAD BOOKINGS ---------------- */
 
@@ -41,12 +42,17 @@ export default function AdminBookings() {
 
     /* ---------------- DERIVED DATA ---------------- */
 
-    const activeBookings = bookings.filter(
-        (b) => b.status !== "COMPLETED" && b.status !== "CANCELLED"
+    const activeBookings = bookings.filter((b) =>
+        ["PENDING_PAY", "PAYMENT_UPLOADED", "CONFIRMED", "ASSIGNED", "IN_PROGRESS"]
+            .includes(b.status)
     );
 
     const completedBookings = bookings.filter(
         (b) => b.status === "COMPLETED"
+    );
+
+    const cancelledBookings = bookings.filter((b) =>
+        ["CANCELLED", "EXPIRED"].includes(b.status)
     );
 
     const paidBookings = bookings.filter((b) =>
@@ -57,6 +63,13 @@ export default function AdminBookings() {
         (sum, b) => sum + (b.service?.price || 0),
         0
     );
+
+    const visibleBookings =
+        tab === "active"
+            ? activeBookings
+            : tab === "completed"
+                ? completedBookings
+                : cancelledBookings;
 
     /* ---------------- VIEW DETAILS ---------------- */
 
@@ -74,7 +87,7 @@ export default function AdminBookings() {
         const res = await apiRequest(
             `/users/providers/availability?scheduledAt=${booking.scheduledAt}`
         );
-        setProviders(res);
+        setProviders(res || []);
         setShowAssignModal(true);
     };
 
@@ -160,6 +173,16 @@ export default function AdminBookings() {
                 >
                     Completed
                 </button>
+
+                <button
+                    onClick={() => setTab("cancelled")}
+                    className={`pb-3 text-sm font-medium ${tab === "cancelled"
+                            ? "text-red-600 border-b-2 border-red-600"
+                            : "text-slate-400"
+                        }`}
+                >
+                    Cancelled
+                </button>
             </div>
 
             {/* TABLE */}
@@ -178,38 +201,36 @@ export default function AdminBookings() {
                     </thead>
 
                     <tbody className="divide-y">
-                        {(tab === "active" ? activeBookings : completedBookings).map(
-                            (b) => (
-                                <tr key={b._id}>
-                                    <td className="px-6 py-4 font-medium">
-                                        {b.service?.name}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {b.customerName}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-slate-500">
-                                        {new Date(b.scheduledAt).toLocaleString()}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <Badge status={b.status} />
-                                    </td>
-                                    <td className="px-6 py-4 font-mono">
-                                        {b.service?.price || 0} SAR
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {b.provider?.name || "—"}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => openDetails(b)}
-                                        >
-                                            View
-                                        </Button>
-                                    </td>
-                                </tr>
-                            )
-                        )}
+                        {visibleBookings.map((b) => (
+                            <tr key={b._id}>
+                                <td className="px-6 py-4 font-medium">
+                                    {b.service?.name}
+                                </td>
+                                <td className="px-6 py-4">
+                                    {b.customerName}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-slate-500">
+                                    {new Date(b.scheduledAt).toLocaleString()}
+                                </td>
+                                <td className="px-6 py-4">
+                                    <Badge status={b.status} />
+                                </td>
+                                <td className="px-6 py-4 font-mono">
+                                    {b.service?.price || 0} SAR
+                                </td>
+                                <td className="px-6 py-4">
+                                    {b.provider?.name || "—"}
+                                </td>
+                                <td className="px-6 py-4">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => openDetails(b)}
+                                    >
+                                        View
+                                    </Button>
+                                </td>
+                            </tr>
+                        ))}
                     </tbody>
                 </table>
             </Card>

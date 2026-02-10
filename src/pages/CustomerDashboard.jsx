@@ -3,42 +3,48 @@ import { apiRequest } from "../api/client";
 import { Button, Card, Badge } from "../components/Ui.jsx";
 import BookingModal from "../components/BookingModal";
 import PaymentModal from "../components/PaymentModal";
+import RescheduleModal from "../components/RescheduleModal";
 
 export default function CustomerDashboard() {
     const [services, setServices] = useState([]);
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [cancellingId, setCancellingId] = useState(null);
 
     const [selectedService, setSelectedService] = useState(null);
     const [payBooking, setPayBooking] = useState(null);
+    const [rescheduleBooking, setRescheduleBooking] = useState(null);
+
     const [activeTab, setActiveTab] = useState("browse");
 
     const loadData = async () => {
-        try {
-            const servicesRes = await apiRequest("/services/public");
-            setServices(servicesRes);
+        const servicesRes = await apiRequest("/services/public");
+        const bookingsRes = await apiRequest("/bookings/customer");
 
-            try {
-                const bookingsRes = await apiRequest("/bookings/customer");
-                setBookings(bookingsRes);
-            } catch {
-                setBookings([]);
-            }
-        } catch (err) {
-            console.error("Failed to load dashboard data:", err);
-            setServices([]);
-            setBookings([]);
-        }
+        setServices(servicesRes || []);
+        setBookings(bookingsRes || []);
     };
 
     useEffect(() => {
         loadData().finally(() => setLoading(false));
     }, []);
 
-    const handleBooked = async () => {
-        const updated = await apiRequest("/bookings/customer");
-        setBookings(updated);
-        setActiveTab("bookings");
+    const cancelBooking = async (bookingId) => {
+        if (!window.confirm("Are you sure you want to cancel this booking?")) return;
+
+        try {
+            setCancellingId(bookingId);
+
+            await apiRequest(`/bookings/${bookingId}/cancel`, {
+                method: "PATCH",
+            });
+
+            await loadData(); // refresh bookings
+        } catch (err) {
+            alert(err.message || "Failed to cancel booking");
+        } finally {
+            setCancellingId(null);
+        }
     };
 
     if (loading) {
@@ -74,7 +80,7 @@ export default function CustomerDashboard() {
                     ))}
                 </div>
 
-                {/* SERVICES */}
+                {/* ================= SERVICES ================= */}
                 {activeTab === "browse" && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {services.map(s => (
@@ -82,10 +88,12 @@ export default function CustomerDashboard() {
                                 key={s._id}
                                 className="overflow-hidden hover:shadow-xl transition-all"
                             >
-                                {/* 🔲 IMAGE PLACEHOLDER */}
+                                {/* 🔲 IMAGE PLACEHOLDER (RESTORED) */}
                                 <div className="aspect-[16/10] bg-slate-100 flex items-center justify-center">
                                     <div className="text-center">
-                                        <div className="text-slate-300 text-sm">Service Image</div>
+                                        <div className="text-slate-300 text-sm">
+                                            Service Image
+                                        </div>
                                         <div className="text-xs text-slate-400 mt-1">
                                             (Coming soon)
                                         </div>
@@ -113,26 +121,37 @@ export default function CustomerDashboard() {
                                     </div>
                                 </div>
                             </Card>
-
                         ))}
                     </div>
                 )}
 
-                {/* BOOKINGS */}
+                {/* ================= BOOKINGS ================= */}
                 {activeTab === "bookings" && (
                     <div className="space-y-4">
-                        {bookings.map(b => (
-                            <Card key={b._id} className="p-5 flex justify-between">
-                                <div>
-                                    <p className="font-medium">{b.service?.name}</p>
-                                    <p className="text-xs text-slate-500">
-                                        {new Date(b.scheduledAt).toLocaleString()}
-                                    </p>
+                        {bookings.map((b) => (
+                            <Card key={b._id} className="p-5 space-y-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        {/* ✅ SERVICE SNAPSHOT */}
+                                        <p className="font-semibold text-slate-900">
+                                            {b.serviceName || b.service?.name || "Service"}
+                                        </p>
+
+                                        <p className="text-sm text-slate-600">
+                                            {(b.servicePrice ?? b.service?.price ?? 0)} SAR
+                                        </p>
+
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            {new Date(b.scheduledAt).toLocaleString()}
+                                        </p>
+                                    </div>
+
+                                    <Badge status={b.status} />
                                 </div>
 
-                                <div className="flex gap-3 items-center">
-                                    <Badge status={b.status} />
-
+                                {/* ACTIONS */}
+                                <div className="flex gap-2 pt-3 border-t">
+                                    {/* PAY */}
                                     {b.status === "PENDING_PAY" && (
                                         <Button
                                             size="sm"
@@ -141,11 +160,36 @@ export default function CustomerDashboard() {
                                             Pay Now
                                         </Button>
                                     )}
+
+                                    {/* RESCHEDULE */}
+                                    {["PENDING_PAY", "PAYMENT_UPLOADED", "CONFIRMED", "ASSIGNED"].includes(
+                                        b.status
+                                    ) && (
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                onClick={() => setRescheduleBooking(b)}
+                                            >
+                                                Reschedule
+                                            </Button>
+                                        )}
+                                    {/* CANCEL */}
+                                    {["PENDING_PAY", "PAYMENT_UPLOADED", "CONFIRMED", "ASSIGNED"].includes(b.status) && (
+                                        <Button
+                                            size="sm"
+                                            variant="danger"
+                                            disabled={cancellingId === b._id}
+                                            onClick={() => cancelBooking(b._id)}
+                                        >
+                                            {cancellingId === b._id ? "Cancelling…" : "Cancel"}
+                                        </Button>
+                                    )}
                                 </div>
                             </Card>
                         ))}
                     </div>
                 )}
+
             </main>
 
             {/* CREATE BOOKING */}
@@ -153,10 +197,10 @@ export default function CustomerDashboard() {
                 <BookingModal
                     service={selectedService}
                     onClose={() => setSelectedService(null)}
-                    onCreated={(booking) => {
-                        setSelectedService(null);   // 🔑 CRITICAL
-                        setPayBooking(booking);
-                        handleBooked();
+                    onCreated={async () => {
+                        setSelectedService(null);
+                        await loadData();
+                        setActiveTab("bookings");
                     }}
                 />
             )}
@@ -166,9 +210,21 @@ export default function CustomerDashboard() {
                 <PaymentModal
                     booking={payBooking}
                     onClose={() => setPayBooking(null)}
-                    onDone={() => {
+                    onDone={async () => {
                         setPayBooking(null);
-                        loadData();
+                        await loadData();
+                    }}
+                />
+            )}
+
+            {/* RESCHEDULE */}
+            {rescheduleBooking && (
+                <RescheduleModal
+                    booking={rescheduleBooking}
+                    onClose={() => setRescheduleBooking(null)}
+                    onDone={async () => {
+                        setRescheduleBooking(null);
+                        await loadData();
                     }}
                 />
             )}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
 import Input from "../components/Input";
 import Button from "../components/Button";
@@ -9,7 +9,14 @@ const TIME_SLOTS = [
     "15:00", "16:00", "17:00",
 ];
 
-export default function BookingModal({ service, onClose, onCreated }) {
+export default function BookingModal({
+    mode = "create",          // "create" | "reschedule"
+    service,
+    booking = null,           // only for reschedule
+    onClose,
+    onCreated,
+    onRescheduled,
+}) {
     const [date, setDate] = useState("");
     const [time, setTime] = useState("");
     const [customerName, setCustomerName] = useState("");
@@ -19,6 +26,21 @@ export default function BookingModal({ service, onClose, onCreated }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    /* ---------- PREFILL FOR RESCHEDULE ---------- */
+    useEffect(() => {
+        if (mode === "reschedule" && booking) {
+            const d = new Date(booking.scheduledAt);
+            setDate(d.toISOString().split("T")[0]);
+            setTime(d.toTimeString().slice(0, 5));
+
+            setCustomerName(booking.customerName || "");
+            setCustomerPhone(booking.customerPhone || "");
+            setCustomerAddress(booking.customerAddress || "");
+            setNotes(booking.notes || "");
+        }
+    }, [mode, booking]);
+
+    /* ---------- SUBMIT ---------- */
     const submit = async () => {
         setError("");
 
@@ -30,10 +52,17 @@ export default function BookingModal({ service, onClose, onCreated }) {
         try {
             setLoading(true);
 
+            const endpoint =
+                mode === "create"
+                    ? "/bookings"
+                    : `/bookings/${booking._id}/reschedule`; // backend later
+
+            const method = mode === "create" ? "POST" : "PATCH";
+
             const res = await fetch(
-                `${import.meta.env.VITE_API_URL}/bookings`,
+                `${import.meta.env.VITE_API_URL}${endpoint}`,
                 {
-                    method: "POST",
+                    method,
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${sessionStorage.getItem("token")}`,
@@ -52,18 +81,27 @@ export default function BookingModal({ service, onClose, onCreated }) {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
 
-            onCreated(data);   // 🔥 pass booking up
-            onClose();         // 🔥 close THIS modal
+            if (mode === "create") {
+                onCreated?.(data);
+            } else {
+                onRescheduled?.(data);
+            }
+
+            onClose();
 
         } catch (e) {
-            setError(e.message || "Booking failed");
+            setError(e.message || "Action failed");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Modal isOpen onClose={onClose} title="Book Service">
+        <Modal
+            isOpen
+            onClose={onClose}
+            title={mode === "create" ? "Book Service" : "Reschedule Booking"}
+        >
             <div className="space-y-6">
                 {error && (
                     <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
@@ -98,7 +136,11 @@ export default function BookingModal({ service, onClose, onCreated }) {
                 </div>
 
                 <Button onClick={submit} disabled={loading} className="w-full">
-                    {loading ? "Booking…" : "Confirm Booking"}
+                    {loading
+                        ? "Please wait…"
+                        : mode === "create"
+                            ? "Confirm Booking"
+                            : "Confirm Reschedule"}
                 </Button>
             </div>
         </Modal>

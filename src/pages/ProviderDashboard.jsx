@@ -42,20 +42,20 @@ export default function ProviderDashboard() {
 
     /* ================= DERIVED DATA ================= */
 
-    const activeJobs = jobs.filter(
-        (j) => j.status !== "COMPLETED" && j.status !== "CANCELLED"
+    const activeJobs = jobs.filter((j) =>
+        ["ASSIGNED", "IN_PROGRESS"].includes(j.status)
     );
 
-    const completedJobs = jobs.filter(
-        (j) => j.status === "COMPLETED"
+    const historyJobs = jobs.filter((j) =>
+        ["COMPLETED", "CANCELLED"].includes(j.status)
     );
 
+    // 🔑 ONLY COMPLETED jobs earn money
     const totalEarnings = useMemo(() => {
-        return completedJobs.reduce(
-            (sum, j) => sum + (j.service?.price || 0),
-            0
-        );
-    }, [completedJobs]);
+        return historyJobs
+            .filter((j) => j.status === "COMPLETED")
+            .reduce((sum, j) => sum + (j.service?.price || 0), 0);
+    }, [historyJobs]);
 
     if (loading) {
         return <div className="p-6 text-slate-500">Loading jobs…</div>;
@@ -82,7 +82,7 @@ export default function ProviderDashboard() {
                             Completed Jobs
                         </p>
                         <p className="text-2xl font-bold text-slate-900 mt-1">
-                            {completedJobs.length}
+                            {historyJobs.filter(j => j.status === "COMPLETED").length}
                         </p>
                     </Card>
 
@@ -145,31 +145,42 @@ export default function ProviderDashboard() {
                 {/* HISTORY */}
                 {tab === "history" && (
                     <>
-                        {completedJobs.length === 0 ? (
+                        {historyJobs.length === 0 ? (
                             <Card className="p-8 text-center text-slate-500">
-                                No completed jobs yet
+                                No job history yet
                             </Card>
                         ) : (
                             <div className="space-y-4">
-                                {completedJobs.map((job) => (
+                                {historyJobs.map((job) => (
                                     <Card key={job._id} className="p-5">
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <p className="font-medium text-slate-900">
                                                     {job.service?.name}
                                                 </p>
+
                                                 <p className="text-xs text-slate-500 mt-1">
                                                     {new Date(job.scheduledAt).toLocaleString()}
                                                 </p>
+
                                                 <p className="text-xs text-slate-400 mt-1">
                                                     {job.customerAddress}
                                                 </p>
-                                                <p className="text-xs font-semibold text-emerald-600 mt-2">
-                                                    Earned: {job.service?.price} SAR
-                                                </p>
+
+                                                {job.status === "COMPLETED" && (
+                                                    <p className="text-xs font-semibold text-emerald-600 mt-2">
+                                                        Earned: {job.service?.price} SAR
+                                                    </p>
+                                                )}
+
+                                                {job.status === "CANCELLED" && (
+                                                    <p className="text-xs font-semibold text-red-500 mt-2">
+                                                        Cancelled by customer
+                                                    </p>
+                                                )}
                                             </div>
 
-                                            <Badge status="COMPLETED" />
+                                            <Badge status={job.status} />
                                         </div>
                                     </Card>
                                 ))}
