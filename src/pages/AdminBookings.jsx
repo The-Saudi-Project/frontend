@@ -97,7 +97,9 @@ export default function AdminBookings() {
 
     /* ---------------- STATUS RULES ---------------- */
 
-    const canAssignProvider = (status) => status === "CONFIRMED";
+    const canAssignProvider = (status) =>
+        status === "CONFIRMED" || status === "ASSIGNED";
+
 
     if (loading) {
         return <div className="p-6 text-slate-500">Loading bookings…</div>;
@@ -186,11 +188,11 @@ export default function AdminBookings() {
                         {canAssignProvider(selectedBooking.status) && (
                             <Button
                                 variant="secondary"
-                                className="mt-2"
                                 onClick={() => openAssignProvider(selectedBooking)}
                             >
-                                Assign Provider
+                                {selectedBooking.provider ? "Change Provider" : "Assign Provider"}
                             </Button>
+
                         )}
                     </div>
                 </Modal>
