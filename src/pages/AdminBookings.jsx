@@ -16,8 +16,9 @@ export default function AdminBookings() {
     const [selectedProvider, setSelectedProvider] = useState("");
     const [assigning, setAssigning] = useState(false);
 
-    // ✅ NEW: payment proof modal
     const [showProofModal, setShowProofModal] = useState(false);
+
+    const [tab, setTab] = useState("active"); // active | completed
 
     /* ---------------- LOAD BOOKINGS ---------------- */
 
@@ -37,6 +38,25 @@ export default function AdminBookings() {
     useEffect(() => {
         loadBookings();
     }, []);
+
+    /* ---------------- DERIVED DATA ---------------- */
+
+    const activeBookings = bookings.filter(
+        (b) => b.status !== "COMPLETED" && b.status !== "CANCELLED"
+    );
+
+    const completedBookings = bookings.filter(
+        (b) => b.status === "COMPLETED"
+    );
+
+    const paidBookings = bookings.filter((b) =>
+        ["CONFIRMED", "ASSIGNED", "IN_PROGRESS", "COMPLETED"].includes(b.status)
+    );
+
+    const totalRevenue = paidBookings.reduce(
+        (sum, b) => sum + (b.service?.price || 0),
+        0
+    );
 
     /* ---------------- VIEW DETAILS ---------------- */
 
@@ -95,11 +115,8 @@ export default function AdminBookings() {
         await loadBookings();
     };
 
-    /* ---------------- STATUS RULES ---------------- */
-
     const canAssignProvider = (status) =>
         status === "CONFIRMED" || status === "ASSIGNED";
-
 
     if (loading) {
         return <div className="p-6 text-slate-500">Loading bookings…</div>;
@@ -108,9 +125,44 @@ export default function AdminBookings() {
     return (
         <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
             <AdminNav />
-            <h1 className="text-2xl font-bold">All Bookings</h1>
 
-            {/* ================= TABLE ================= */}
+            {/* HEADER */}
+            <div className="flex justify-between items-end">
+                <h1 className="text-2xl font-bold">Bookings</h1>
+                <div className="text-right">
+                    <p className="text-xs text-slate-400 uppercase">
+                        Total Revenue
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                        {totalRevenue} SAR
+                    </p>
+                </div>
+            </div>
+
+            {/* TABS */}
+            <div className="flex gap-6 border-b">
+                <button
+                    onClick={() => setTab("active")}
+                    className={`pb-3 text-sm font-medium ${tab === "active"
+                            ? "text-emerald-600 border-b-2 border-emerald-600"
+                            : "text-slate-400"
+                        }`}
+                >
+                    Active Bookings
+                </button>
+
+                <button
+                    onClick={() => setTab("completed")}
+                    className={`pb-3 text-sm font-medium ${tab === "completed"
+                            ? "text-emerald-600 border-b-2 border-emerald-600"
+                            : "text-slate-400"
+                        }`}
+                >
+                    Completed
+                </button>
+            </div>
+
+            {/* TABLE */}
             <Card className="overflow-hidden">
                 <table className="w-full text-left">
                     <thead className="bg-slate-50 text-xs uppercase text-slate-500">
@@ -119,42 +171,50 @@ export default function AdminBookings() {
                             <th className="px-6 py-4">Customer</th>
                             <th className="px-6 py-4">Scheduled</th>
                             <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4">Amount</th>
                             <th className="px-6 py-4">Provider</th>
                             <th className="px-6 py-4">Actions</th>
                         </tr>
                     </thead>
 
                     <tbody className="divide-y">
-                        {bookings.map((b) => (
-                            <tr key={b._id}>
-                                <td className="px-6 py-4 font-medium">
-                                    {b.service?.name}
-                                </td>
-                                <td className="px-6 py-4">{b.customerName}</td>
-                                <td className="px-6 py-4 text-sm text-slate-500">
-                                    {new Date(b.scheduledAt).toLocaleString()}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <Badge status={b.status} />
-                                </td>
-                                <td className="px-6 py-4">
-                                    {b.provider?.name || "—"}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() => openDetails(b)}
-                                    >
-                                        View
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))}
+                        {(tab === "active" ? activeBookings : completedBookings).map(
+                            (b) => (
+                                <tr key={b._id}>
+                                    <td className="px-6 py-4 font-medium">
+                                        {b.service?.name}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {b.customerName}
+                                    </td>
+                                    <td className="px-6 py-4 text-sm text-slate-500">
+                                        {new Date(b.scheduledAt).toLocaleString()}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <Badge status={b.status} />
+                                    </td>
+                                    <td className="px-6 py-4 font-mono">
+                                        {b.service?.price || 0} SAR
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {b.provider?.name || "—"}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <Button
+                                            variant="secondary"
+                                            onClick={() => openDetails(b)}
+                                        >
+                                            View
+                                        </Button>
+                                    </td>
+                                </tr>
+                            )
+                        )}
                     </tbody>
                 </table>
             </Card>
 
-            {/* ================= DETAILS MODAL ================= */}
+            {/* DETAILS MODAL */}
             {showDetails && selectedBooking && (
                 <Modal
                     title="Booking Details"
@@ -162,17 +222,15 @@ export default function AdminBookings() {
                 >
                     <div className="space-y-3 text-sm">
                         <p><strong>Service:</strong> {selectedBooking.service?.name}</p>
+                        <p><strong>Amount:</strong> {selectedBooking.service?.price} SAR</p>
                         <p><strong>Customer:</strong> {selectedBooking.customerName}</p>
                         <p><strong>Phone:</strong> {selectedBooking.customerPhone}</p>
                         <p><strong>Address:</strong> {selectedBooking.customerAddress}</p>
-                        <p><strong>Scheduled:</strong> {new Date(selectedBooking.scheduledAt).toLocaleString()}</p>
                         <p><strong>Status:</strong> {selectedBooking.status}</p>
 
-                        {/* ✅ VIEW PAYMENT PROOF */}
                         {selectedBooking.paymentProof && (
                             <Button
                                 variant="ghost"
-                                className="mt-2"
                                 onClick={() => setShowProofModal(true)}
                             >
                                 View payment proof
@@ -190,34 +248,32 @@ export default function AdminBookings() {
                                 variant="secondary"
                                 onClick={() => openAssignProvider(selectedBooking)}
                             >
-                                {selectedBooking.provider ? "Change Provider" : "Assign Provider"}
+                                {selectedBooking.provider
+                                    ? "Change Provider"
+                                    : "Assign Provider"}
                             </Button>
-
                         )}
                     </div>
                 </Modal>
             )}
 
-            {/* ================= PAYMENT PROOF MODAL ================= */}
+            {/* PAYMENT PROOF MODAL */}
             {showProofModal && selectedBooking && (
                 <Modal
                     title="Payment Proof"
                     onClose={() => setShowProofModal(false)}
                 >
-                    <div className="flex justify-center">
-                        <img
-                            src={`${import.meta.env.VITE_API_URL.replace(
-                                "/api",
-                                ""
-                            )}/uploads/payments/${selectedBooking.paymentProof}`}
-                            alt="Payment proof"
-                            className="max-h-[70vh] rounded-xl border"
-                        />
-                    </div>
+                    <img
+                        src={`${import.meta.env.VITE_API_URL.replace(
+                            "/api",
+                            ""
+                        )}/uploads/payments/${selectedBooking.paymentProof}`}
+                        className="max-h-[70vh] mx-auto rounded-xl border"
+                    />
                 </Modal>
             )}
 
-            {/* ================= ASSIGN PROVIDER MODAL ================= */}
+            {/* ASSIGN PROVIDER MODAL */}
             {showAssignModal && selectedBooking && (
                 <Modal
                     title="Assign Provider"

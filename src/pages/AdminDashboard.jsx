@@ -6,12 +6,16 @@ import Modal from "../components/Modal";
 
 export default function AdminDashboard() {
     const [services, setServices] = useState([]);
+    const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
 
     const [stats, setStats] = useState({
         services: 0,
         bookings: 0,
         pending: 0,
+        paid: 0,
+        completed: 0,
+        revenue: 0,
     });
 
     /* ---------- EDIT MODAL STATE ---------- */
@@ -27,16 +31,34 @@ export default function AdminDashboard() {
 
     /* ---------- LOADERS ---------- */
 
-    const loadServices = async () => {
-        const res = await apiRequest("/services/admin");
-        setServices(res);
-    };
-
-    const loadStats = async () => {
+    const loadAll = async () => {
         const [servicesRes, bookingsRes] = await Promise.all([
             apiRequest("/services/admin"),
             apiRequest("/bookings"),
         ]);
+
+        setServices(servicesRes);
+        setBookings(bookingsRes);
+
+        const paidStatuses = [
+            "CONFIRMED",
+            "ASSIGNED",
+            "IN_PROGRESS",
+            "COMPLETED",
+        ];
+
+        const paidBookings = bookingsRes.filter((b) =>
+            paidStatuses.includes(b.status)
+        );
+
+        const completedBookings = bookingsRes.filter(
+            (b) => b.status === "COMPLETED"
+        );
+
+        const revenue = paidBookings.reduce(
+            (sum, b) => sum + (b.service?.price || 0),
+            0
+        );
 
         setStats({
             services: servicesRes.length,
@@ -44,12 +66,14 @@ export default function AdminDashboard() {
             pending: bookingsRes.filter(
                 (b) => b.status === "PENDING_PAY"
             ).length,
+            paid: paidBookings.length,
+            completed: completedBookings.length,
+            revenue,
         });
     };
 
     useEffect(() => {
-        Promise.all([loadServices(), loadStats()])
-            .finally(() => setLoading(false));
+        loadAll().finally(() => setLoading(false));
     }, []);
 
     /* ---------- ACTIONS ---------- */
@@ -69,8 +93,7 @@ export default function AdminDashboard() {
         setName("");
         setPrice("");
         setDescription("");
-
-        await Promise.all([loadServices(), loadStats()]);
+        await loadAll();
     };
 
     const openEditModal = (service) => {
@@ -91,14 +114,14 @@ export default function AdminDashboard() {
         });
 
         setEditService(null);
-        await Promise.all([loadServices(), loadStats()]);
+        await loadAll();
     };
 
     const deleteService = async (id) => {
         if (!window.confirm("Delete this service permanently?")) return;
 
         await apiRequest(`/services/${id}`, { method: "DELETE" });
-        await Promise.all([loadServices(), loadStats()]);
+        await loadAll();
     };
 
     /* ---------- LOADING ---------- */
@@ -112,7 +135,7 @@ export default function AdminDashboard() {
             <AdminNav />
 
             {/* ---------- METRICS ---------- */}
-            <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <section className="grid grid-cols-2 lg:grid-cols-6 gap-4">
                 <Card className="p-5">
                     <p className="text-xs font-bold uppercase text-slate-400">
                         Services
@@ -129,10 +152,37 @@ export default function AdminDashboard() {
 
                 <Card className="p-5">
                     <p className="text-xs font-bold uppercase text-slate-400">
-                        Pending
+                        Pending Payment
                     </p>
                     <p className="text-2xl font-bold text-amber-600">
                         {stats.pending}
+                    </p>
+                </Card>
+
+                <Card className="p-5">
+                    <p className="text-xs font-bold uppercase text-slate-400">
+                        Paid Jobs
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600">
+                        {stats.paid}
+                    </p>
+                </Card>
+
+                <Card className="p-5">
+                    <p className="text-xs font-bold uppercase text-slate-400">
+                        Completed
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                        {stats.completed}
+                    </p>
+                </Card>
+
+                <Card className="p-5">
+                    <p className="text-xs font-bold uppercase text-slate-400">
+                        Revenue
+                    </p>
+                    <p className="text-2xl font-bold text-emerald-700">
+                        {stats.revenue} SAR
                     </p>
                 </Card>
             </section>
@@ -142,13 +192,22 @@ export default function AdminDashboard() {
                 <h3 className="font-semibold mb-4">Create Service</h3>
 
                 <div className="grid md:grid-cols-2 gap-4">
-                    <Input label="Service Name" value={name} onChange={e => setName(e.target.value)} />
-                    <Input label="Price (SAR)" type="number" value={price} onChange={e => setPrice(e.target.value)} />
+                    <Input
+                        label="Service Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                    <Input
+                        label="Price (SAR)"
+                        type="number"
+                        value={price}
+                        onChange={(e) => setPrice(e.target.value)}
+                    />
                     <Input
                         className="md:col-span-2"
                         label="Description"
                         value={description}
-                        onChange={e => setDescription(e.target.value)}
+                        onChange={(e) => setDescription(e.target.value)}
                     />
                 </div>
 
@@ -174,7 +233,9 @@ export default function AdminDashboard() {
                                 <td className="px-6 py-4 font-medium">
                                     {s.name}
                                 </td>
-                                <td className="px-6 py-4">{s.price} SAR</td>
+                                <td className="px-6 py-4">
+                                    {s.price} SAR
+                                </td>
                                 <td className="px-6 py-4 text-right space-x-2">
                                     <Button
                                         variant="secondary"
@@ -207,18 +268,20 @@ export default function AdminDashboard() {
                         <Input
                             label="Service Name"
                             value={editName}
-                            onChange={e => setEditName(e.target.value)}
+                            onChange={(e) => setEditName(e.target.value)}
                         />
                         <Input
                             label="Price (SAR)"
                             type="number"
                             value={editPrice}
-                            onChange={e => setEditPrice(e.target.value)}
+                            onChange={(e) => setEditPrice(e.target.value)}
                         />
                         <Input
                             label="Description"
                             value={editDescription}
-                            onChange={e => setEditDescription(e.target.value)}
+                            onChange={(e) =>
+                                setEditDescription(e.target.value)
+                            }
                         />
 
                         <div className="flex justify-end gap-3 pt-4">

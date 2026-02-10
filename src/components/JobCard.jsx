@@ -27,7 +27,7 @@ export default function JobCard({
                         {service?.name}
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
-                        Requested on {new Date(createdAt).toLocaleString()}
+                        Booked on {new Date(createdAt).toLocaleString()}
                     </p>
                 </div>
 
@@ -67,33 +67,29 @@ export default function JobCard({
                 )}
             </div>
 
-            {/* SCHEDULE */}
-            <div className="text-sm text-slate-600">
-                <span className="font-semibold text-slate-700">
-                    Scheduled for:
-                </span>{" "}
-                {new Date(scheduledAt).toLocaleString()}
+            {/* SCHEDULE + PRICE */}
+            <div className="flex justify-between items-center text-sm text-slate-600">
+                <div>
+                    <span className="font-semibold text-slate-700">
+                        Scheduled:
+                    </span>{" "}
+                    {new Date(scheduledAt).toLocaleString()}
+                </div>
+
+                <div className="font-semibold text-emerald-600">
+                    {service?.price} SAR
+                </div>
             </div>
 
             {/* ACTIONS */}
             <div className="flex gap-3 pt-4 border-t">
-                {status === "CREATED" && (
-                    <Button
-                        variant="secondary"
-                        disabled={loading}
-                        onClick={() => onAccept(_id)}
-                    >
-                        {loading ? "Accepting..." : "Accept Job"}
-                    </Button>
-                )}
-
                 {status === "ASSIGNED" && (
                     <Button
                         variant="secondary"
                         disabled={loading}
                         onClick={() => onStart(_id)}
                     >
-                        {loading ? "Starting..." : "Start Job"}
+                        {loading ? "Starting…" : "Start Job"}
                     </Button>
                 )}
 
@@ -102,7 +98,7 @@ export default function JobCard({
                         disabled={loading}
                         onClick={() => onComplete(_id)}
                     >
-                        {loading ? "Completing..." : "Mark Complete"}
+                        {loading ? "Completing…" : "Mark Complete"}
                     </Button>
                 )}
             </div>
