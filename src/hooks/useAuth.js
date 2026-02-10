@@ -6,9 +6,18 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     apiRequest("/auth/me")
       .then(setUser)
-      .catch(() => sessionStorage.clear())
+      .catch(() => {
+        sessionStorage.clear();
+        setUser(null);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -18,8 +27,7 @@ export const useAuth = () => {
       body: { email, password, expectedRole },
     });
 
-    sessionStorage.setItem("accessToken", res.accessToken);
-    sessionStorage.setItem("refreshToken", res.refreshToken);
+    sessionStorage.setItem("token", res.token);
     setUser(res.user);
   };
 
